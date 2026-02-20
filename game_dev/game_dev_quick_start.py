@@ -69,6 +69,11 @@ def lesson2_create_window():
     第2节示例：创建一个基本的游戏窗口
 
     这是所有pygame程序的基本结构！
+
+    调用示例：
+        lesson2_create_window()  # 打开一个800x600的白色窗口
+
+    注意：运行后会打开游戏窗口，按关闭按钮退出。
     """
     # 步骤1：初始化pygame
     pygame.init()
@@ -145,6 +150,17 @@ pygame提供了多种绑制函数，都在pygame.draw模块中：
 def lesson3_draw_shapes():
     """
     第3节示例：绘制各种图形
+
+    调用示例：
+        lesson3_draw_shapes()  # 显示各种图形的绘制演示
+
+    展示内容：
+        - 矩形（实心和空心）
+        - 圆形（实心和空心）
+        - 直线
+        - 多边形（三角形）
+        - 椭圆
+        - 文字
     """
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -234,6 +250,15 @@ def lesson3_draw_shapes():
 def lesson4_handle_events():
     """
     第4节示例：处理键盘和鼠标事件
+
+    调用示例：
+        lesson4_handle_events()  # 打开事件处理演示
+
+    操作说明：
+        - 方向键或WASD：移动蓝色方块
+        - 鼠标移动：红色圆圈跟随
+        - 空格键：控制台输出提示
+        - ESC或关闭窗口：退出
     """
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -351,6 +376,14 @@ def lesson4_handle_events():
 def lesson5_moving_objects():
     """
     第5节示例：让物体移动和反弹
+
+    调用示例：
+        lesson5_moving_objects()  # 观看红色小球在窗口内弹跳
+
+    演示内容：
+        - 小球自动移动
+        - 碰到边界自动反弹
+        - ESC或关闭窗口退出
     """
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -437,6 +470,15 @@ def lesson5_moving_objects():
 def lesson6_collision_detection():
     """
     第6节示例：碰撞检测
+
+    调用示例：
+        lesson6_collision_detection()  # 打开碰撞检测演示
+
+    操作说明：
+        - 方向键或WASD：移动蓝色方块
+        - 碰到红色物体时，物体会变成绿色
+        - 演示矩形碰撞和圆形碰撞两种方式
+        - ESC或关闭窗口退出
     """
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -560,6 +602,17 @@ def lesson7_catch_ball_game():
     第7节：运行接球游戏
 
     这个游戏展示了如何把学到的知识组合成一个完整的游戏。
+
+    调用示例：
+        lesson7_catch_ball_game()  # 显示接球游戏的说明
+
+    游戏位置：
+        完整游戏代码在 games/05_catch_ball.py
+
+    控制方式：
+        - 左右方向键或A/D键：移动挡板
+        - 空格键：重新开始
+        - ESC：退出游戏
     """
     print("接球游戏 - 请运行 games/05_catch_ball.py")
     print("控制方式：")
@@ -595,6 +648,18 @@ def lesson8_snake_game():
     第8节：运行贪吃蛇游戏
 
     这个游戏展示了更复杂的游戏逻辑。
+
+    调用示例：
+        lesson8_snake_game()  # 显示贪吃蛇游戏的说明
+
+    游戏位置：
+        完整游戏代码在 games/06_snake.py
+
+    控制方式：
+        - 方向键或WASD：控制蛇的移动方向
+        - 空格键：暂停/继续游戏
+        - R键：重新开始
+        - ESC：退出游戏
     """
     print("贪吃蛇游戏 - 请运行 games/06_snake.py")
     print("控制方式：")
@@ -610,6 +675,11 @@ def lesson8_snake_game():
 def show_menu():
     """
     显示教程菜单
+
+    这个函数没有参数，直接调用即可显示菜单。
+
+    调用示例：
+        show_menu()  # 显示教程菜单
     """
     print("\n" + "=" * 60)
     print("       游戏开发速成教程 - pygame")
@@ -633,7 +703,12 @@ def run_lesson(choice):
     运行指定章节的示例
 
     参数：
-        choice (int): 章节编号
+        choice (int): 章节编号，范围 2-8
+
+    调用示例：
+        run_lesson(2)  # 运行第2节：创建游戏窗口
+        run_lesson(3)  # 运行第3节：绘制图形
+        run_lesson(6)  # 运行第6节：碰撞检测
     """
     lessons = {
         2: lesson2_create_window,
@@ -655,6 +730,15 @@ def run_lesson(choice):
 def main():
     """
     主函数 - 教程入口
+
+    这个函数是整个教程的入口，显示菜单并处理用户选择。
+
+    调用示例：
+        main()  # 启动教程，进入交互式菜单
+
+    注意：通常在文件末尾这样调用：
+        if __name__ == "__main__":
+            main()
     """
     print("""
     ╔════════════════════════════════════════════════════════════╗

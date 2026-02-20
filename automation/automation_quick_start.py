@@ -379,6 +379,13 @@ def section_3_batch_rename():
 
     format_numbers(demo_dir, "img_", 3)
 
+    # ========================================
+    # 调用示例总结（方便学习者参考）
+    # ========================================
+    # add_prefix("photos", "2024_")           # 给photos文件夹所有文件加"2024_"前缀
+    # change_extension("docs", ".txt", ".md") # 把docs文件夹所有.txt改成.md
+    # format_numbers("images", "pic_", 4)     # 把images文件夹文件重命名为pic_0001, pic_0002...
+
     print("\n【重命名后】")
     for f in sorted(os.listdir(demo_dir)):
         print(f"  📄 {f}")
@@ -535,6 +542,14 @@ def section_4_file_organizer():
 
     # 执行整理
     result = organize_files(demo_dir)
+
+    # ========================================
+    # 调用示例（方便学习者参考）
+    # ========================================
+    # result = organize_files("C:/Users/你的用户名/Downloads")  # 整理下载文件夹
+    # result = organize_files("C:/Users/你的用户名/Desktop")   # 整理桌面
+    # for category, count in result.items():
+    #     print(f"{category}: {count}个文件")
 
     print("\n【整理结果】")
     print("-" * 40)
@@ -830,6 +845,14 @@ Python可以用来做网站、游戏、数据分析。
         print(f.read())
 
     count = replace_in_file(test_file, "Python", "🐍 Python")
+
+    # ========================================
+    # 调用示例（方便学习者参考）
+    # ========================================
+    # replace_in_file("日记.txt", "2023", "2024")              # 把2023改成2024
+    # replace_in_file("config.ini", "debug=False", "debug=True") # 修改配置
+    # replace_in_file("report.doc", "旧公司名", "新公司名")     # 批量替换公司名
+
     print(f"\n替换了 {count} 处 'Python' → '🐍 Python'")
     print("\n替换后内容：")
     with open(test_file, "r", encoding="utf-8") as f:
@@ -883,6 +906,15 @@ Python可以用来做网站、游戏、数据分析。
 
     stats, errors = analyze_log(log_file)
 
+    # ========================================
+    # 调用示例（方便学习者参考）
+    # ========================================
+    # stats, errors = analyze_log("app.log")      # 分析应用日志
+    # stats, errors = analyze_log("/var/log/syslog")  # 分析系统日志
+    # print(f"发现 {stats['ERROR']} 个错误")
+    # for error in errors:
+    #     print(f"错误详情: {error}")
+
     print("日志统计结果：")
     print(f"  ✅ INFO: {stats['INFO']}条")
     print(f"  ⚠️  WARNING: {stats['WARNING']}条")
@@ -932,6 +964,15 @@ Python可以用来做网站、游戏、数据分析。
         return items
 
     items = extract_prices(data_file)
+
+    # ========================================
+    # 调用示例（方便学习者参考）
+    # ========================================
+    # items = extract_prices("商品清单.txt")
+    # for name, price in items:
+    #     print(f"{name}: ¥{price}")
+    # total = sum(price for _, price in items)
+    # print(f"总计: ¥{total}")
 
     print("提取的商品数据：")
     total = 0
@@ -1044,6 +1085,14 @@ def section_7_scheduled_tasks():
     # 演示（只等3秒）
     print("演示：3秒后提醒")
     simple_timer(3, "该喝水了！💧")
+
+    # ========================================
+    # 调用示例（方便学习者参考）
+    # ========================================
+    # simple_timer(60, "一分钟到了！")              # 60秒后提醒
+    # simple_timer(1800, "该休息一下了！")          # 30分钟后提醒
+    # simple_timer(3600, "一小时过去了，站起来走走！") # 1小时后提醒
+    # simple_timer(5, "面条煮好了！")               # 5秒后提醒（煮面计时）
 
     print("\n【示例2】使用schedule库（代码示例）")
     print("-" * 40)
@@ -1260,6 +1309,15 @@ def section_8_comprehensive_case():
 
     # 执行整理
     result = organize_homework(demo_dir)
+
+    # ========================================
+    # 调用示例（方便学习者参考）
+    # ========================================
+    # result = organize_homework("C:/Users/你的用户名/Downloads")  # 整理下载文件夹的作业
+    # result = organize_homework("D:/我的文档/作业")              # 整理指定文件夹
+    # for subject, count in result.items():
+    #     if count > 0:
+    #         print(f"{subject}: {count}个作业文件")
 
     print("\n【整理结果】")
     print("-" * 40)

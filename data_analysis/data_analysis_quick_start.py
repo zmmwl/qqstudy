@@ -779,6 +779,21 @@ print("\n--- 7.6 成绩等级分析 ---")
 
 # 定义成绩等级函数
 def get_grade(score):
+    """
+    根据分数返回对应的等级
+
+    参数:
+        score: 分数值（整数或浮点数，范围0-100）
+               例如: 95, 85.5, 72
+
+    返回:
+        等级字符串: '优秀'(>=90), '良好'(>=80), '中等'(>=70), '及格'(>=60), '不及格'(<60)
+
+    调用示例:
+        get_grade(95)    # 返回 '优秀'
+        get_grade(85.5)  # 返回 '良好'
+        get_grade(55)    # 返回 '不及格'
+    """
     if score >= 90:
         return '优秀'
     elif score >= 80:
@@ -790,6 +805,13 @@ def get_grade(score):
     else:
         return '不及格'
 
+# 调用示例1：直接调用
+print("调用示例：")
+print(f"  get_grade(95) = {get_grade(95)}")      # 优秀
+print(f"  get_grade(85.5) = {get_grade(85.5)}")  # 良好
+print(f"  get_grade(55) = {get_grade(55)}")      # 不及格
+
+# 调用示例2：在DataFrame中使用apply批量处理
 df['等级'] = df['平均分'].apply(get_grade)
 grade_count = df['等级'].value_counts()
 
