@@ -1,0 +1,420 @@
+/*
+ * ========================================
+ * CSS 样式文件示例
+ * ========================================
+ *
+ * CSS 用于美化网页，控制颜色、字体、布局等
+ *
+ * 使用方法：
+ * 在 HTML 中引入：
+ * <link rel="stylesheet" href="style.css">
+ */
+
+/* ========== 全局样式 ========== */
+
+/* 重置默认样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 页面基本样式 */
+body {
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+/* ========== 颜色变量 ========== */
+
+:root {
+    --primary-color: #667eea;      /* 主色 */
+    --secondary-color: #764ba2;    /* 副色 */
+    --success-color: #28a745;      /* 成功 */
+    --warning-color: #ffc107;      /* 警告 */
+    --danger-color: #dc3545;       /* 危险 */
+    --text-color: #333;            /* 文字颜色 */
+    --light-bg: #f8f9fa;           /* 浅色背景 */
+    --dark-bg: #343a40;            /* 深色背景 */
+}
+
+/* ========== 布局容器 ========== */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container-sm {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ========== 导航栏 ========== */
+
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    margin-right: 20px;
+    font-weight: bold;
+}
+
+.navbar a:hover {
+    opacity: 0.8;
+}
+
+/* ========== 标题样式 ========== */
+
+h1 {
+    font-size: 2.5em;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.8em;
+    color: var(--secondary-color);
+    margin: 20px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+h3 {
+    font-size: 1.4em;
+    color: var(--text-color);
+    margin: 15px 0 10px 0;
+}
+
+/* ========== 文本样式 ========== */
+
+p {
+    margin-bottom: 15px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-primary {
+    color: var(--primary-color);
+}
+
+.text-success {
+    color: var(--success-color);
+}
+
+.text-warning {
+    color: var(--warning-color);
+}
+
+.text-danger {
+    color: var(--danger-color);
+}
+
+/* ========== 按钮样式 ========== */
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* ========== 卡片样式 ========== */
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-body {
+    color: #666;
+}
+
+/* ========== 表单样式 ========== */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-control::placeholder {
+    color: #aaa;
+}
+
+/* ========== 表格样式 ========== */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table th {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 15px;
+    text-align: left;
+}
+
+.table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.table tr:hover {
+    background-color: var(--light-bg);
+}
+
+/* ========== 提示框样式 ========== */
+
+.alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* ========== 徽章样式 ========== */
+
+.badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.badge-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.badge-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.badge-warning {
+    background-color: var(--warning-color);
+    color: #333;
+}
+
+/* ========== 网格布局 ========== */
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -10px;
+}
+
+.col {
+    flex: 1;
+    padding: 10px;
+}
+
+.col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding: 10px;
+}
+
+.col-4 {
+    flex: 0 0 33.33%;
+    max-width: 33.33%;
+    padding: 10px;
+}
+
+.col-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+    padding: 10px;
+}
+
+/* ========== 工具类 ========== */
+
+.mt-10 { margin-top: 10px; }
+.mt-20 { margin-top: 20px; }
+.mt-30 { margin-top: 30px; }
+
+.mb-10 { margin-bottom: 10px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
+
+.p-10 { padding: 10px; }
+.p-20 { padding: 20px; }
+.p-30 { padding: 30px; }
+
+.hidden { display: none; }
+.visible { display: block; }
+
+/* ========== 动画效果 ========== */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease;
+}
+
+/* ========== 响应式设计 ========== */
+
+/* 平板设备 */
+@media (max-width: 768px) {
+    .col-6, .col-4, .col-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .container {
+        padding: 15px;
+    }
+}
+
+/* 手机设备 */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5em;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
