@@ -61,8 +61,14 @@ CS（Client/Server）客户端/服务器架构：
    例如：https://www.baidu.com/s?wd=你好
 
    结构：
-   https://     www.baidu.com    /s    ?wd=你好
-   协议          域名/服务器       路径   参数
+   https://     www.baidu.com    /s         ?wd=你好
+   协议          域名/服务器       路径(页面)   参数(?后面)
+
+   通俗理解：
+   - 协议：用哪种语言交流（https是加密的，更安全）
+   - 域名：服务器的名字（就像商店招牌）
+   - 路径：要访问的页面（商店里的哪个柜台）
+   - 参数：传递的具体信息（你要买什么）
 
 2. HTTP（语言）→ 浏览器和服务器怎么对话
    - 请求（Request）：浏览器发给服务器
@@ -138,11 +144,18 @@ Python 自带一个超简单的 Web 服务器，
 【什么是端口？】
 
 一台电脑可以运行很多服务，用端口号区分：
-- 80：HTTP 网页（默认）
-- 443：HTTPS 加密网页
+- 就像一栋大楼有很多房间，用门牌号区分
+
+常见端口：
+- 80：HTTP 网页（默认，访问时不用写）
+- 443：HTTPS 加密网页（默认，访问时不用写）
 - 3306：MySQL 数据库
 - 5000：Flask 开发服务器（我们要用的）
 - 8000：Python 简易服务器
+
+举例：
+- http://localhost:5000 = 访问本机的5000端口
+- localhost = 127.0.0.1（本机的IP地址）
 """
 
 # 下面用代码创建一个最简单的服务器
@@ -310,9 +323,17 @@ def html_page():
 """
 【什么是 URL 参数？】
 
-在 URL 中传递数据给服务器：
-- /user/小明        → 路径参数
-- /search?q=Python  → 查询参数
+在 URL 中传递数据给服务器，有两种方式：
+
+1. 路径参数：直接写在路径里
+   /user/小明        → 路径参数 name = "小明"
+   /user/小明/14     → 路径参数 name = "小明", age = 14
+   特点：参数是URL的一部分，更简洁
+
+2. 查询参数：用 ? 和 & 连接
+   /search?q=Python           → 查询参数 q = "Python"
+   /search?q=Python&page=2    → 查询参数 q = "Python", page = "2"
+   特点：参数在?后面，用&分隔，适合可选参数
 
 【为什么要用参数？】
 
@@ -682,6 +703,8 @@ def template_loop():
 
     <h3>统计信息</h3>
     <p>总人数：{{ students|length }} 人</p>
+    <!-- students|length 表示获取students列表的长度 -->
+    <!-- | 叫做"过滤器"，length是统计数量的过滤器 -->
 
     <p><a href="/">返回首页</a></p>
     '''
@@ -1007,6 +1030,10 @@ def student_list():
 @app.route('/students/<int:student_id>')
 def student_detail(student_id):
     """学生详情"""
+    # next() 是Python内置函数，从迭代器中获取第一个满足条件的元素
+    # (s for s in students_db if s['id'] == student_id) 是生成器表达式
+    # 整句意思：从students_db中找到第一个id等于student_id的学生
+    # 如果找不到，返回 None（第二个参数）
     student = next((s for s in students_db if s['id'] == student_id), None)
 
     if not student:
@@ -1136,18 +1163,29 @@ def student_delete(student_id):
 
 API（Application Programming Interface）= 应用程序接口
 
+用生活中的例子理解：
+- 餐厅点餐：你（前端）告诉服务员（API）要什么菜
+- 服务员把菜单给厨房（后端），厨房做好后通过服务员给你
+- API 就是"服务员"，负责传递信息
+
 让不同的程序可以互相"对话"：
 - 前端（网页/手机App）发送请求
-- 后端（服务器）返回数据（通常是 JSON）
+- 后端（服务器）返回数据（通常是 JSON 格式）
 
-【RESTful API】
+【RESTful API 是什么？】
 
-一种设计 API 的风格：
-- GET    /api/students     → 获取学生列表
-- GET    /api/students/1   → 获取ID为1的学生
-- POST   /api/students     → 创建新学生
-- PUT    /api/students/1   → 更新ID为1的学生
-- DELETE /api/students/1   → 删除ID为1的学生
+RESTful 是一种设计 API 的风格，让 API 更规范、更易懂：
+- 用名词表示资源：/students（学生资源）
+- 用动词（HTTP方法）表示操作：GET获取、POST创建、PUT更新、DELETE删除
+
+对照表：
+- GET    /api/students     → 获取学生列表（查）
+- GET    /api/students/1   → 获取ID为1的学生（查）
+- POST   /api/students     → 创建新学生（增）
+- PUT    /api/students/1   → 更新ID为1的学生（改）
+- DELETE /api/students/1   → 删除ID为1的学生（删）
+
+其实就是数据库的"增删改查"！
 """
 
 from flask import jsonify

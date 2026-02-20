@@ -26,6 +26,11 @@
 
 这个循环叫做"游戏循环"（Game Loop），是所有游戏的核心！
 
+你可以把游戏想象成一本"翻页动画书"：
+- 每一页就是一帧画面
+- 快速翻页（每秒60页）就产生了动画效果
+- 游戏循环就是不断"翻页"的过程
+
 
 【什么是pygame？】
 
@@ -57,6 +62,21 @@ pygame是Python的一个游戏开发库，它提供了：
 3. 背景颜色：窗口的底色
 
 
+【pygame的坐标系】
+
+pygame使用的是"屏幕坐标系"，和数学课本上的坐标系不太一样：
+- 原点(0, 0)在窗口的【左上角】
+- x轴向右递增（和数学一样）
+- y轴【向下】递增（和数学相反！）
+
+例如在800x600的窗口中：
+- 左上角是 (0, 0)
+- 右下角是 (800, 600)
+- 中心点大约是 (400, 300)
+
+记住：y值越大，位置越靠下！
+
+
 【代码示例】
 """
 
@@ -79,32 +99,38 @@ def lesson2_create_window():
     pygame.init()
 
     # 步骤2：创建窗口
-    # set_mode() 返回一个Surface对象，这是我们的"画布"
-    WIDTH, HEIGHT = 800, 600
+    # set_mode() 返回一个Surface对象，我们可以把它想象成一块"画布"
+    # 所有图形都画在这块画布上，然后显示到屏幕上
+    WIDTH, HEIGHT = 800, 600  # 窗口宽800像素，高600像素
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # 步骤3：设置窗口标题
     pygame.display.set_caption("我的第一个游戏窗口")
 
-    # 步骤4：创建时钟对象（用于控制帧率）
+    # 步骤4：创建时钟对象（用于控制游戏速度）
+    # 想象成游戏的"节拍器"，控制每秒画多少帧
     clock = pygame.time.Clock()
 
     # 步骤5：游戏主循环
+    # 这是游戏的"心脏"，只要running为True，游戏就会一直运行
     running = True
     while running:
-        # 5.1 处理事件
+        # 5.1 处理事件（事件就是玩家的操作）
+        # event.get() 获取所有未处理的事件，就像查看"收件箱"
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+            if event.type == pygame.QUIT:  # 点击关闭按钮
+                running = False  # 把running改成False，循环就会结束
 
-        # 5.2 更新游戏状态（这里暂时没有）
+        # 5.2 更新游戏状态（这里暂时没有游戏逻辑）
 
         # 5.3 绘制画面
-        screen.fill((255, 255, 255))  # 白色背景
-        pygame.display.flip()  # 更新显示
+        screen.fill((255, 255, 255))  # 用白色填充整个屏幕（相当于清空画布）
+        pygame.display.flip()  # 把画好的内容显示出来（相当于"翻页"）
 
         # 5.4 控制帧率
-        clock.tick(60)  # 60帧每秒
+        # tick(60) 表示每秒最多循环60次，也就是60帧
+        # 这样游戏速度就不会太快，在不同的电脑上运行速度一致
+        clock.tick(60)
 
     # 步骤6：退出
     pygame.quit()
@@ -186,8 +212,8 @@ def lesson3_draw_shapes():
         # ========== 绘制各种图形 ==========
 
         # 1. 矩形
-        # pygame.draw.rect(表面, 颜色, (x, y, 宽, 高), 边框宽度)
-        # 边框宽度=0表示填充，>0表示只画边框
+        # pygame.draw.rect(表面, 颜色, (左上角x, 左上角y, 宽度, 高度), 边框宽度)
+        # 边框宽度=0表示填充（实心），>0表示只画边框（空心）
         pygame.draw.rect(screen, RED, (50, 50, 100, 60))      # 实心红色矩形
         pygame.draw.rect(screen, BLUE, (200, 50, 100, 60), 3)  # 蓝色边框矩形
 
@@ -201,20 +227,25 @@ def lesson3_draw_shapes():
         pygame.draw.line(screen, (0, 0, 0), (400, 50), (400, 250), 2)
 
         # 4. 多边形（三角形）
-        # pygame.draw.polygon(表面, 颜色, [(点1x, 点1y), (点2x, 点2y), ...])
+        # pygame.draw.polygon(表面, 颜色, [点1的坐标, 点2的坐标, ...])
+        # 给出所有顶点的坐标，pygame会自动把它们连起来
         triangle_points = [(600, 50), (550, 150), (650, 150)]
         pygame.draw.polygon(screen, (0, 255, 255), triangle_points)
 
         # 5. 椭圆
-        # pygame.draw.ellipse(表面, 颜色, (x, y, 宽, 高), 边框宽度)
+        # pygame.draw.ellipse(表面, 颜色, (左上角x, 左上角y, 宽度, 高度), 边框宽度)
+        # 椭圆是画在一个"不可见的矩形"里面的
         pygame.draw.ellipse(screen, (255, 0, 255), (500, 200, 120, 60))
 
-        # 6. 文字
-        # 创建字体
-        font = pygame.font.Font(None, 36)  # None表示默认字体，36是字号
-        # 渲染文字
+        # 6. 文字（显示文字需要三个步骤）
+        # 步骤1：创建字体对象
+        font = pygame.font.Font(None, 36)  # None表示使用默认字体，36是字号大小
+        # 步骤2：渲染文字（把文字变成图像）
+        # render(文字内容, 是否抗锯齿, 颜色)
+        # 抗锯齿=True会让文字边缘更平滑
         text_surface = font.render("Hello Pygame!", True, (0, 0, 0))
-        # 绘制到屏幕
+        # 步骤3：把文字图像画到屏幕上
+        # blit的意思是"把一个图像复制到另一个图像上"
         screen.blit(text_surface, (50, 300))
 
         pygame.display.flip()
@@ -230,17 +261,27 @@ def lesson3_draw_shapes():
 """
 【什么是事件？】
 
-事件是用户与程序交互的方式，例如：
-- 点击关闭按钮
-- 按下键盘
-- 移动鼠标
-- 点击鼠标
+事件就是"发生了什么事情"，比如：
+- 点击关闭按钮 → 产生QUIT事件
+- 按下键盘 → 产生KEYDOWN事件
+- 移动鼠标 → 产生MOUSEMOTION事件
+- 点击鼠标 → 产生MOUSEBUTTONDOWN事件
+
+pygame会把所有事件放进一个"队列"（就像排队一样），
+我们需要用循环来逐个处理它们。
 
 
 【处理事件的两种方式】
 
-1. 事件循环：检测特定事件发生
-2. 状态查询：获取按键/鼠标的当前状态
+1. 事件循环：检测"刚才发生了什么"（比如按了一下空格）
+   - 适合处理单次触发的操作（如跳跃、开枪）
+
+2. 状态查询：检测"现在是什么状态"（比如按键是否按着）
+   - 适合处理持续性的操作（如移动、加速）
+
+打个比方：
+- 事件循环像是"门铃响了"——告诉你有人按了门铃
+- 状态查询像是"门是否开着"——告诉你门的当前状态
 
 
 【代码示例】
@@ -279,46 +320,51 @@ def lesson4_handle_events():
     running = True
     while running:
         # ========== 方式1：事件循环 ==========
+        # 遍历所有未处理的事件
         for event in pygame.event.get():
-            # 退出事件
+            # 退出事件：当用户点击窗口的关闭按钮时触发
             if event.type == pygame.QUIT:
                 running = False
 
-            # 键盘按下事件
+            # 键盘按下事件：当用户按下任意键时触发
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ESCAPE:  # ESC键的编号
                     running = False
-                elif event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_SPACE:  # 空格键的编号
                     print("空格键被按下！")
 
-            # 鼠标按下事件
+            # 鼠标按下事件：当用户点击鼠标时触发
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # event.button: 1=左键, 2=中键, 3=右键
+                # event.button 告诉我们是哪个键：1=左键, 2=中键, 3=右键
                 if event.button == 1:
-                    print(f"鼠标左键点击位置: {event.pos}")
+                    print(f"鼠标左键点击位置: {event.pos}")  # event.pos 是 (x, y) 坐标
 
-            # 鼠标移动事件
+            # 鼠标移动事件：当用户移动鼠标时触发
             elif event.type == pygame.MOUSEMOTION:
-                mouse_x, mouse_y = event.pos
+                mouse_x, mouse_y = event.pos  # 获取鼠标当前位置
 
         # ========== 方式2：状态查询 ==========
-        # 获取所有按键的状态
+        # get_pressed() 返回一个列表，记录所有按键的当前状态
+        # 如果按键被按下，对应的值就是 True，否则是 False
         keys = pygame.key.get_pressed()
 
         # 根据按键状态移动方块
-        speed = 5
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            rect_x -= speed
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            rect_x += speed
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            rect_y -= speed
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            rect_y += speed
+        # 注意：这里用 if 而不是 elif，这样可以同时按两个键斜着移动！
+        speed = 5  # 每帧移动5像素
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:  # 左箭头或A键
+            rect_x -= speed  # 向左移动，x坐标减小
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:  # 右箭头或D键
+            rect_x += speed  # 向右移动，x坐标增大
+        if keys[pygame.K_UP] or keys[pygame.K_w]:  # 上箭头或W键
+            rect_y -= speed  # 向上移动，y坐标减小（记住y轴向下！）
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:  # 下箭头或S键
+            rect_y += speed  # 向下移动，y坐标增大
 
-        # 边界检测
-        rect_x = max(0, min(rect_x, 800 - 50))
-        rect_y = max(0, min(rect_y, 600 - 50))
+        # 边界检测（防止方块跑出屏幕）
+        # max(0, ...) 确保坐标不会小于0（不会跑到左边或上边外面）
+        # min(..., 750) 确保坐标不会超过边界（800-50=750，不会跑到右边或下边外面）
+        rect_x = max(0, min(rect_x, 800 - 50))  # 800是窗口宽度，50是方块宽度
+        rect_y = max(0, min(rect_y, 600 - 50))  # 600是窗口高度，50是方块高度
 
         # ========== 绘制 ==========
         screen.fill(WHITE)
@@ -355,18 +401,31 @@ def lesson4_handle_events():
 
 每帧都执行这个计算，物体就会不断移动！
 
+举个例子：
+- 假设小球的x坐标是100，x方向速度是5
+- 第1帧后：x = 100 + 5 = 105
+- 第2帧后：x = 105 + 5 = 110
+- ...小球就向右移动了！
+
 
 【速度的概念】
 
-速度是一个向量，包含方向和大小：
-- 速度 > 0：向右/下移动
-- 速度 < 0：向左/上移动
+速度决定了物体移动的快慢和方向：
+- 速度 > 0：向右/下移动（x增加或y增加）
+- 速度 < 0：向左/上移动（x减少或y减少）
 - 速度 = 0：不动
+
+速度的绝对值越大，移动越快！
 
 
 【边界反弹】
 
-当物体碰到边界时，将对应方向的速度取反即可实现反弹！
+当物体碰到边界时，把速度变成负数就能反弹！
+- 原来向右移动（速度=5）
+- 碰到右边界后，速度变成-5
+- 现在就向左移动了！
+
+这就像打乒乓球，球碰到球拍后方向会反过来。
 
 
 【代码示例】
@@ -393,11 +452,11 @@ def lesson5_moving_objects():
     WIDTH, HEIGHT = 800, 600
 
     # 小球属性
-    ball_x = 400.0  # x坐标
+    ball_x = 400.0  # x坐标（用小数，因为速度可能是小数）
     ball_y = 300.0  # y坐标
-    ball_radius = 20  # 半径
-    ball_speed_x = 5.0  # x方向速度
-    ball_speed_y = 3.0  # y方向速度
+    ball_radius = 20  # 半径（像素）
+    ball_speed_x = 5.0  # x方向速度：正值表示向右移动
+    ball_speed_y = 3.0  # y方向速度：正值表示向下移动
 
     WHITE = (255, 255, 255)
     RED = (255, 0, 0)
@@ -412,28 +471,35 @@ def lesson5_moving_objects():
                     running = False
 
         # ========== 更新位置 ==========
-        ball_x += ball_speed_x
-        ball_y += ball_speed_y
+        # 这两行代码让小球"动"起来
+        ball_x += ball_speed_x  # x坐标增加，小球向右移动
+        ball_y += ball_speed_y  # y坐标增加，小球向下移动
 
         # ========== 边界检测和反弹 ==========
-        # 左右边界
+        # 判断小球是否碰到左边界（小球左边缘到达x=0的位置）
         if ball_x - ball_radius <= 0:
-            ball_x = ball_radius
-            ball_speed_x = -ball_speed_x  # 速度取反
+            ball_x = ball_radius  # 防止小球"卡"在边界里
+            ball_speed_x = -ball_speed_x  # 速度取反，小球开始向右移动
+
+        # 判断小球是否碰到右边界
         elif ball_x + ball_radius >= WIDTH:
             ball_x = WIDTH - ball_radius
-            ball_speed_x = -ball_speed_x
+            ball_speed_x = -ball_speed_x  # 速度取反，小球开始向左移动
 
-        # 上下边界
+        # 判断小球是否碰到上边界
         if ball_y - ball_radius <= 0:
             ball_y = ball_radius
-            ball_speed_y = -ball_speed_y
+            ball_speed_y = -ball_speed_y  # 速度取反，小球开始向下移动
+
+        # 判断小球是否碰到下边界
         elif ball_y + ball_radius >= HEIGHT:
             ball_y = HEIGHT - ball_radius
-            ball_speed_y = -ball_speed_y
+            ball_speed_y = -ball_speed_y  # 速度取反，小球开始向上移动
 
         # ========== 绘制 ==========
         screen.fill(WHITE)
+        # 注意：ball_x 和 ball_y 是小数，但画图需要整数坐标
+        # int() 函数把小数转换成整数
         pygame.draw.circle(screen, RED, (int(ball_x), int(ball_y)), ball_radius)
 
         pygame.display.flip()
@@ -450,17 +516,19 @@ def lesson5_moving_objects():
 【什么是碰撞检测？】
 
 判断两个游戏物体是否接触或重叠。
+比如：子弹打中敌人、角色吃到金币、球拍接到球...
 
 【两种常用的碰撞检测方法】
 
 1. 矩形碰撞（AABB）
    - 适用于方形物体
-   - 简单高效
-   - pygame.Rect.colliderect()
+   - 简单高效，是最常用的方法
+   - pygame提供了一个现成的函数：colliderect()
 
 2. 圆形碰撞
-   - 适用于圆形物体
-   - 两圆心距离 < 两半径之和 = 碰撞
+   - 适用于圆形物体（如球类游戏）
+   - 原理：计算两个圆心的距离，如果距离小于两半径之和，就碰撞了
+   - 需要用到勾股定理！
 
 
 【代码示例】
@@ -526,33 +594,42 @@ def lesson6_collision_detection():
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             player_y += player_speed
 
-        # 边界限制
+        # 边界限制（防止玩家跑出屏幕）
         player_x = max(0, min(player_x, 800 - player_size))
         player_y = max(0, min(player_y, 600 - player_size))
 
-        # 创建玩家矩形
+        # 创建玩家矩形对象（用于碰撞检测）
+        # pygame.Rect(左上角x, 左上角y, 宽度, 高度)
         player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
 
         # ========== 矩形碰撞检测 ==========
+        # colliderect() 是pygame提供的函数，自动检测两个矩形是否重叠
+        # 返回 True 表示碰撞，False 表示没碰撞
         rect_collision = player_rect.colliderect(target_rect)
 
         # ========== 圆形碰撞检测 ==========
-        # 计算玩家中心和圆心的距离
-        player_center_x = player_x + player_size // 2
-        player_center_y = player_y + player_size // 2
+        # 步骤1：计算玩家方块的中心点（因为玩家是方块，我们需要找到它的中心）
+        player_center_x = player_x + player_size // 2  # 方块中心的x坐标
+        player_center_y = player_y + player_size // 2  # 方块中心的y坐标
 
-        import math
+        # 步骤2：用勾股定理计算两点之间的距离
+        # 勾股定理：直角三角形中，斜边² = 直角边1² + 直角边2²
+        # 所以：距离 = sqrt((x2-x1)² + (y2-y1)²)
+        import math  # math.sqrt() 用来计算平方根
         distance = math.sqrt(
-            (player_center_x - circle_x) ** 2 +
-            (player_center_y - circle_y) ** 2
+            (player_center_x - circle_x) ** 2 +  # x方向的差的平方
+            (player_center_y - circle_y) ** 2    # y方向的差的平方
         )
-        # 碰撞条件：距离 < 玩家半径 + 圆半径
+        # 步骤3：判断是否碰撞
+        # 如果两个圆心的距离 < 两个半径之和，说明两个圆重叠了
         circle_collision = distance < (player_size // 2 + circle_radius)
 
         # ========== 绘制 ==========
         screen.fill(WHITE)
 
         # 绘制目标方块（碰撞时变色）
+        # 这是一个"三元表达式"：值1 if 条件 else 值2
+        # 如果碰撞了就用绿色，否则用红色
         target_color = GREEN if rect_collision else RED
         pygame.draw.rect(screen, target_color, target_rect)
         rect_text = font.render("Rect", True, (0, 0, 0))

@@ -49,8 +49,9 @@ is_student = True   # 布尔值 bool
 nothing = None      # 空值 NoneType
 
 # 查看变量类型
-print(type(name))   # <class 'str'>
-print(type(age))    # <class 'int'>
+print(type(name))   # <class 'str'> 表示字符串类型
+print(type(age))    # <class 'int'> 表示整数类型
+# type() 是一个内置函数，用来查看变量是什么类型
 
 # 类型转换
 num_str = "100"
@@ -86,15 +87,20 @@ print(sentence.strip())      # 去除首尾空格
 print(sentence.split())      # 分割成列表: ['Hello', 'Python', 'World']
 print(sentence.replace("Python", "编程"))  # 替换
 
-# 字符串索引和切片
+# 字符串索引和切片（就像切蛋糕一样，切出一部分）
 word = "Python"
-print(word[0])       # 第一个字符: 'P'
-print(word[-1])      # 最后一个字符: 'n'
-print(word[0:3])     # 切片: 'Pyt'
-print(word[3:])      # 切片: 'hon'
-print(word[::-1])    # 反转: 'nohtyP'
+# 索引位置示意： P(0) y(1) t(2) h(3) o(4) n(5)
+#              也可以倒着数：n(-1) o(-2) h(-3) t(-4) y(-5) P(-6)
+print(word[0])       # 第一个字符: 'P'（索引从0开始！）
+print(word[-1])      # 最后一个字符: 'n'（-1表示倒数第一个）
+print(word[0:3])     # 切片: 'Pyt'（从索引0切到3，但不包含3）
+print(word[3:])      # 切片: 'hon'（从索引3切到最后）
+print(word[::-1])    # 反转: 'nohtyP'（步长为-1，表示倒着走）
 
-print(word[5:0:-1])
+# 切片格式：[开始:结束:步长]
+# 步长为正数：从左往右切
+# 步长为负数：从右往左切
+print(word[5:0:-1])  # 'nohty'（从索引5倒着切到索引0，不包含0）
 
 # 练习3：创建一个字符串，使用至少3种字符串方法
 # _______________________________________
@@ -111,10 +117,10 @@ b = 3
 print(a + b)   # 加法: 13
 print(a - b)   # 减法: 7
 print(a * b)   # 乘法: 30
-print(a / b)   # 除法: 3.333...
-print(a // b)  # 整除: 3
-print(a % b)   # 取余: 1
-print(a ** b)  # 幂运算: 1000
+print(a / b)   # 除法: 3.333...（普通除法，结果是带小数的）
+print(a // b)  # 整除: 3（只保留整数部分，就像10个苹果分给3人，每人3个）
+print(a % b)   # 取余: 1（10除以3余1，就是分完后剩的1个苹果）
+print(a ** b)  # 幂运算: 1000（10的3次方 = 10×10×10）
 
 # 比较运算符
 print(a > b)   # True
@@ -203,9 +209,10 @@ person = {
 }
 
 # 访问字典
-print(person["name"])           # "小明"
-print(person.get("age"))        # 18
-print(person.get("job", "无"))  # "无"（键不存在时返回默认值）
+print(person["name"])           # "小明"（用方括号访问）
+print(person.get("age"))        # 18（用get方法访问，更安全）
+print(person.get("job", "无"))  # "无"（键不存在时返回默认值，不会报错）
+# 区别：person["job"] 会报错（因为job不存在），但 person.get("job", "无") 返回 "无"
 
 # 修改字典
 person["age"] = 19              # 修改值
@@ -272,9 +279,10 @@ fruits = ["苹果", "香蕉", "橙子"]
 for fruit in fruits:
     print(fruit)
 
-# 使用 enumerate 获取索引
+# 使用 enumerate 获取索引（enumerate = 枚举，就是给每个元素编号）
 for index, fruit in enumerate(fruits):
     print(f"{index}: {fruit}")
+# 输出：0: 苹果, 1: 香蕉, 2: 橙子
 
 # while 循环
 count = 0
@@ -321,11 +329,12 @@ def calculate(a, b):
 add, sub = calculate(10, 5)
 print(f"和:{add}, 差:{sub}")
 
-# 可变参数
+# 可变参数（*numbers 中的 * 表示可以接收任意多个参数）
 def sum_all(*numbers):
+    # numbers 会变成一个元组，包含所有传入的参数
     return sum(numbers)
 
-print(sum_all(1, 2, 3, 4, 5))  # 15
+print(sum_all(1, 2, 3, 4, 5))  # 15，numbers = (1, 2, 3, 4, 5)
 
 # 练习10：编写一个函数，判断一个数字是否为质数
 # _______________________________________
@@ -382,25 +391,42 @@ except Exception as e:
 # 第13节：类和对象（面向对象基础，可选）
 # ========================================
 
-class Dog:
+"""
+【用生活中的例子理解类和对象】
+
+类（Class）= 设计图纸/模板
+  - 比如："狗"这个类，定义了所有狗的共同特征（有名字、年龄，会叫）
+
+对象（Object）= 根据图纸造出来的实物
+  - 比如：旺财、来福 都是"狗"类的对象，但各自有不同的名字和年龄
+
+为什么用类？
+  - 代码复用：一次定义，创建多个对象
+  - 数据和操作打包在一起：狗的名字和叫声在一起，更清晰
+"""
+
+class Dog:  # 定义一个"狗"类（类名首字母大写）
     def __init__(self, name, age):
-        """初始化方法"""
-        self.name = name
-        self.age = age
+        """初始化方法（创建对象时自动调用）"""
+        # self 代表"这个对象本身"
+        # self.name = name 意思是：把这个对象的名字设为传入的name
+        self.name = name  # 给这个狗起名字
+        self.age = age    # 给这个狗设置年龄
 
     def bark(self):
-        """方法"""
+        """方法（对象能做的事情）"""
         return f"{self.name}说：汪汪！"
 
     def info(self):
+        """返回狗的信息"""
         return f"名字：{self.name}，年龄：{self.age}岁"
 
-# 创建对象
-dog1 = Dog("旺财", 3)
-dog2 = Dog("来福", 5)
+# 创建对象（实例化）
+dog1 = Dog("旺财", 3)  # 创建一只叫"旺财"、3岁的狗
+dog2 = Dog("来福", 5)  # 创建另一只叫"来福"、5岁的狗
 
-print(dog1.bark())
-print(dog2.info())
+print(dog1.bark())  # 旺财说：汪汪！
+print(dog2.info())  # 名字：来福，年龄：5岁
 
 
 # ========================================

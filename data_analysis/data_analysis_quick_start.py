@@ -23,13 +23,21 @@
 # 准备工作：导入库
 # ========================================
 
+# 【什么是"库"？】
+# 库就像是一个"工具箱"，里面装着别人写好的代码
+# 我们导入库，就可以直接使用里面的工具，不用自己从头写
+# 比如：pandas库里有人写好的读取Excel的功能，我们直接调用就行
+
 # pandas 是数据分析的核心库，提供 DataFrame 数据结构
-import pandas as pd
+# 就像 Excel 一样强大，但可以处理更多数据、做更复杂的操作
+import pandas as pd  # as pd 表示给它起个简短的别名，以后用 pd 就行
 
 # matplotlib 是绑图库，用于数据可视化
-import matplotlib.pyplot as plt
+# 可以画出各种漂亮的图表：折线图、柱状图、饼图等
+import matplotlib.pyplot as plt  # 同样起个简短别名 plt
 
 # 设置中文显示（解决中文乱码问题）
+# 如果不设置，图表中的中文会显示成方框
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
@@ -77,6 +85,12 @@ print("=" * 50)
 # 【什么是 DataFrame？】
 # DataFrame 就像一个Excel表格，有行有列
 # 每一列可以存储不同类型的数据
+#
+# 【更形象的比喻】
+# 把 DataFrame 想象成一个"成绩单"：
+# - 每一行是一个学生的信息（张三、李四、王五...）
+# - 每一列是一种信息（姓名、年龄、语文成绩、数学成绩...）
+# - 表头就是列名，告诉我们每列是什么意思
 
 # 2.1 创建一个简单的 DataFrame
 print("\n--- 2.1 创建DataFrame ---")
@@ -132,15 +146,19 @@ print(df_students.dtypes)      # 每列的数据类型
 print("\n数据统计摘要：")
 print(df_students.describe())  # 数值列的统计信息
 
-# 【describe() 输出解释】
-# count: 非空值数量
-# mean: 平均值
-# std: 标准差（数据分散程度）
-# min: 最小值
-# 25%: 25%分位数
-# 50%: 中位数
-# 75%: 75%分位数
-# max: 最大值
+# 【describe() 输出解释 - 用成绩来理解】
+# count: 有多少个学生（非空值数量）
+# mean: 平均分（所有成绩加起来除以人数）
+# std: 标准差（想象成"成绩波动大小"）
+#      - 标准差大：成绩高低差距大，有人考100有人考60
+#      - 标准差小：成绩都差不多，都在80分左右
+# min: 最低分
+# 25%: 把成绩从小到大排，排到25%位置的那个分数
+#      例如20人，第5个人的分数（比这低的有25%的人）
+# 50%: 中位数（排正中间那个人的分数）
+#      例如20人，第10个人的分数
+# 75%: 排到75%位置的那个分数
+# max: 最高分
 
 # 2.4 查看数据信息
 print("\n--- 2.4 数据详细信息 ---")
@@ -178,12 +196,19 @@ print("=" * 50)
 # 3.1 选择列
 print("\n--- 3.1 选择列 ---")
 
-# 选择单列（返回Series，类似一维数组）
+# 选择单列（返回Series）
+# 【什么是Series？】
+# Series 就是一列数据，像一排排队的同学
+# 它只有一个维度（只有一列），不像 DataFrame 有多列
 names = df_students['姓名']
 print("所有学生姓名：")
 print(names)
 
-# 选择多列（注意是双中括号）
+# 选择多列（注意是双中括号！）
+# 【为什么是双中括号？】
+# 单括号 ['列名'] = 选择一列，返回 Series
+# 双括号 [['列名1', '列名2']] = 选择多列，返回 DataFrame
+# 记忆：外面的大括号表示"我要选列"，里面的小括号是"列名列表"
 scores = df_students[['姓名', '数学', '英语']]
 print("\n姓名和成绩：")
 print(scores)
@@ -319,9 +344,18 @@ df_students['平均分'] = df_students[subjects].mean(axis=1)
 print("\n学生成绩（含总分和平均分）：")
 print(df_students[['姓名', '总分', '平均分']].head())
 
-# 【axis参数说明】
-# axis=0: 纵向操作（对列操作，默认值）
-# axis=1: 横向操作（对行操作）
+# 【axis参数说明 - 用成绩表来理解】
+# 想象一张成绩表，学生姓名在左边，各科成绩在右边
+#
+# axis=0（纵向，默认值）：
+#   - 从上往下看，对"每一列"进行操作
+#   - 例如：计算"数学"这列的平均分（把所有学生的数学成绩加起来求平均）
+#   - 口诀：axis=0，往下走，每列算一个结果
+#
+# axis=1（横向）：
+#   - 从左往右看，对"每一行"进行操作
+#   - 例如：计算"张三"的总分（把张三的语数英科都加起来）
+#   - 口诀：axis=1，往右走，每行算一个结果
 
 # 4.3 分组统计 groupby
 print("\n--- 4.3 分组统计 ---")
@@ -331,9 +365,20 @@ print("各班级各科平均分：")
 class_avg = df_students.groupby('班级')[subjects].mean()
 print(class_avg.round(2))  # round(2) 保留2位小数
 
-# 【groupby语法】
+# 【groupby语法 - 用"分组站队"来理解】
+# 想象体育课分组：老师喊"按班级集合！"
+# - 1班的学生站到一起
+# - 2班的学生站到一起
+# - 3班的学生站到一起
+# 然后每个小组分别做统计（比如数人数、量身高）
+#
 # df.groupby('分组列')['统计列'].统计函数()
 # 例如：按班级分组，计算数学成绩的平均值
+#
+# 代码执行过程：
+# 1. groupby('班级') -> 把相同班级的行放在一起
+# 2. ['数学'] -> 从每组中取出数学成绩
+# 3. .mean() -> 计算每组的平均分
 
 # 按性别分组统计
 print("\n按性别统计：")
@@ -405,9 +450,17 @@ print("\n--- 5.1 折线图 ---")
 
 # 准备数据：某学生各科成绩
 student_name = '张明'
+# 下面的代码一步步拆解：
+# 1. df_students['姓名'] == student_name -> 找出姓名是"张明"的行（返回True/False）
+# 2. df_students[...] -> 用上面的条件筛选出"张明"的那一行
+# 3. [subjects] -> 只取出科目这几列
+# 4. .values -> 把数据转成纯数字数组（去掉行列标签）
+# 5. [0] -> 取第一个元素（因为结果是一个二维数组，我们要的是第一行）
 student_scores = df_students[df_students['姓名'] == student_name][subjects].values[0]
 
-# 绑折线图
+# 【绑折线图前的准备】
+# plt.figure() 就像拿出一张白纸准备画画
+# figsize=(8, 5) 表示这张纸宽8单位、高5单位
 plt.figure(figsize=(8, 5))  # 创建画布，设置大小
 plt.plot(subjects, student_scores, marker='o', linewidth=2, markersize=8)
 # marker: 数据点样式，linewidth: 线宽，markersize: 点大小
@@ -543,10 +596,25 @@ class_avg = df_students.groupby('班级')[subjects].mean()
 
 plt.figure(figsize=(12, 6))
 
-# 绑制每个科目的柱状图
-x = range(len(class_avg.index))
-width = 0.2
+# 【分组柱状图的原理 - 用"排队站好"来理解】
+# 想象有4个班级站成一排，每个班级有4个科目的柱子
+# 如果所有柱子都挤在同一位置，就会重叠看不清
+# 所以我们要让它们"错开站"：
+#
+# x = [0, 1, 2, 3] 表示4个班级的位置（中心点）
+# width = 0.2 是每个柱子的宽度
+#
+# 柱子位置计算：
+# - 语文柱子：中心往左偏 1.5*width（最左边）
+# - 数学柱子：中心往左偏 0.5*width
+# - 英语柱子：中心往右偏 0.5*width
+# - 科学柱子：中心往右偏 1.5*width（最右边）
+#
+# 这样4个柱子就整整齐齐并排站在每个班级位置上了！
+x = range(len(class_avg.index))  # [0, 1, 2, 3] 每个数字代表一个班级
+width = 0.2  # 每个柱子的宽度
 
+# 绘制4组柱子，每组偏移不同位置
 plt.bar([i - 1.5*width for i in x], class_avg['语文'], width, label='语文', color='#FF6B6B')
 plt.bar([i - 0.5*width for i in x], class_avg['数学'], width, label='数学', color='#4ECDC4')
 plt.bar([i + 0.5*width for i in x], class_avg['英语'], width, label='英语', color='#45B7D1')
@@ -564,15 +632,23 @@ plt.close()
 print("美化图表1已保存")
 
 # 6.2 设置样式
+# 【过渡说明】学会了绑图，接下来让图表更好看！
+# 就像写作文，先学会写，再学会写得漂亮
 print("\n--- 6.2 设置样式 ---")
 
-# 使用内置样式
+# 使用内置样式（就像给图表换"皮肤"）
+# plt.style.available 可以查看所有可用样式
 plt.style.use('seaborn-v0_8')  # 可选：ggplot, seaborn, dark_background 等
 
 # 绑制成绩分布直方图
+# 【什么是直方图？】
+# 把成绩分成几个区间，看每个区间有多少人
+# 比如：60-70分3人，70-80分8人，80-90分6人...
+# 就像把全班按成绩"分桶装"
 plt.figure(figsize=(10, 6))
 plt.hist(df_students['总分'], bins=10, color='skyblue', edgecolor='black', alpha=0.7)
-# bins: 分成多少组
+# bins=10: 把成绩分成10个区间（桶）
+# 比如满分400分，分成10个桶，每个桶就是40分的范围
 
 plt.xlabel('总分')
 plt.ylabel('人数')
@@ -675,6 +751,10 @@ print("第7节：综合案例 - 学生成绩分析")
 print("=" * 50)
 
 # 7.1 数据准备
+# 【为什么要有综合案例？】
+# 前面我们学习了各种零散的知识点（筛选、统计、画图）
+# 现在通过一个完整的案例，把所有知识点串起来
+# 就像学做菜，学了切菜、炒菜、调味，现在要做一整桌菜！
 print("\n--- 7.1 数据加载和预处理 ---")
 
 # 重新加载数据
@@ -706,7 +786,14 @@ for subject in subjects:
 print("\n--- 7.3 排名分析 ---")
 
 # 按总分排名
+# sort_values(): 按总分排序，ascending=False 表示从高到低
+# reset_index(drop=True): 重置索引（行号），丢弃旧的索引
+#   - 排序后行号是乱的（比如原来第3行可能变成第1行）
+#   - reset_index 让行号重新变成 0,1,2,3...
 df_ranked = df.sort_values('总分', ascending=False).reset_index(drop=True)
+
+# 让索引从1开始（因为排名没有第0名）
+# df_ranked.index 是行的标签，我们把它改成 1,2,3,4...
 df_ranked.index = df_ranked.index + 1  # 排名从1开始
 
 print("=== 成绩排行榜 TOP10 ===")
@@ -743,6 +830,20 @@ ax1.set_title('成绩排行榜 TOP10', fontweight='bold')
 ax1.invert_yaxis()  # 从上到下排列
 
 # 2. 各科成绩分布（箱线图）
+# 【什么是箱线图？- 用"打包行李"来理解】
+# 箱线图用一个"箱子"展示数据的分布情况：
+#
+#      ┌───┐  <- 上边缘（最高分附近，不包括极端值）
+#      │   │
+#   ┌──┴───┴──┐ <- 上四分位数（75%的人低于这个分）
+#   │    ●    │ <- 中位数线（正中间那个人的分数）
+#   └──┬───┬──┘ <- 下四分位数（25%的人低于这个分）
+#      │   │
+#      └───┘  <- 下边缘（最低分附近，不包括极端值）
+#        ○      <- 圆点是异常值（特别低或特别高的分数）
+#
+# 箱子越"扁"：成绩集中在中间，波动小
+# 箱子越"长"：成绩分散，高低差距大
 ax2 = fig.add_subplot(2, 2, 2)
 df[subjects].boxplot(ax=ax2)
 ax2.set_ylabel('分数')
@@ -812,6 +913,15 @@ print(f"  get_grade(85.5) = {get_grade(85.5)}")  # 良好
 print(f"  get_grade(55) = {get_grade(55)}")      # 不及格
 
 # 调用示例2：在DataFrame中使用apply批量处理
+# 【apply 是什么？- 用"流水线"来理解】
+# 想象工厂流水线：
+# - 传送带把每个产品（每行数据）送到工人面前
+# - 工人对每个产品执行同样的操作（调用 get_grade 函数）
+# - 处理完放回传送带继续
+#
+# df['平均分'].apply(get_grade) 的意思是：
+# "对平均分这一列的每个数字，都调用 get_grade 函数"
+# 就像对全班每个人的平均分都判断一次等级
 df['等级'] = df['平均分'].apply(get_grade)
 grade_count = df['等级'].value_counts()
 
@@ -877,9 +987,21 @@ print(type_stats)
 print("\n--- 8.4 评分与票房关系 ---")
 
 # 计算相关系数
+# 【什么是相关系数？- 用"朋友关系"来理解】
+# 相关系数告诉我们两个事物是否有"关联"：
+#
+# 正相关（接近+1）：一个增加，另一个也增加
+#   例如：学习时间越长，成绩越高
+#
+# 负相关（接近-1）：一个增加，另一个减少
+#   例如：玩游戏时间越长，成绩越低
+#
+# 无相关（接近0）：两个事物没关系
+#   例如：鞋码和成绩没关系
+#
+# 这里算的是：评分高，票房是否也高？
 correlation = df_movies['评分'].corr(df_movies['票房(亿)'])
 print(f"评分与票房的相关系数：{correlation:.2f}")
-# 相关系数接近1表示正相关，接近-1表示负相关，接近0表示无相关
 
 # 8.5 年份分析
 print("\n--- 8.5 年份分析 ---")
@@ -902,10 +1024,15 @@ fig = plt.figure(figsize=(16, 12))
 # 1. 票房TOP10
 ax1 = fig.add_subplot(2, 2, 1)
 top10_box = df_movies.nlargest(10, '票房(亿)')
-colors = plt.cm.Reds(np.linspace(0.4, 0.8, 10))  # 渐变色
-# 需要导入 numpy
-import numpy as np
-colors = plt.cm.Reds(np.linspace(0.4, 0.8, 10))
+
+# 【渐变色的原理】
+# plt.cm.Reds 是一个颜色地图，从浅红到深红
+# np.linspace(0.4, 0.8, 10) 生成10个数字，从0.4到0.8等间隔
+# 这些数字对应颜色地图上的位置，越大的数字颜色越深
+# 结果：10个柱子颜色从浅红渐变到深红
+import numpy as np  # numpy 是数值计算库，用于生成数字序列
+colors = plt.cm.Reds(np.linspace(0.4, 0.8, 10))  # 生成10个渐变红色
+
 ax1.barh(top10_box['电影名称'], top10_box['票房(亿)'], color=colors)
 ax1.set_xlabel('票房（亿）')
 ax1.set_title('票房排行榜 TOP10', fontweight='bold')

@@ -136,8 +136,14 @@ def example_section_1():
 【什么是HTTP？】
 HTTP（超文本传输协议）是浏览器和服务器之间通信的"语言"。
 
+打个比方：
+- 你去餐厅点菜，需要用菜单和服务员沟通
+- 浏览器访问网站，需要用HTTP协议和服务器沟通
+- HTTP就是互联网世界的"点菜语言"
+
 【requests 库】
 requests 是 Python 最流行的 HTTP 请求库，非常简单易用。
+你可以把它想象成"自动点菜机"，帮你发送请求、接收响应。
 
 安装方法：
 pip install requests
@@ -150,10 +156,11 @@ pip install requests
 - response.content        # 网页内容（字节）
 
 【常见状态码】
-- 200: 成功
-- 404: 页面不存在
-- 403: 禁止访问
-- 500: 服务器错误
+状态码就像餐厅的回应：
+- 200: 成功（"您的菜来了！"）
+- 404: 页面不存在（"不好意思，这道菜我们没有"）
+- 403: 禁止访问（"这道菜只供应VIP客户"）
+- 500: 服务器错误（"厨房着火了，请稍后再来"）
 """
 
 def section_2_http_basics():
@@ -308,16 +315,21 @@ HTML（超文本标记语言）是网页的"骨架"，用来定义网页的结�
 
 【BeautifulSoup 库】
 BeautifulSoup 是最流行的HTML解析库，可以轻松提取网页内容。
+你可以把它想象成一个"智能筛子"，帮你在网页中筛选出需要的内容。
 
 安装方法：
 pip install beautifulsoup4
 
 【常用方法】
-- soup.find('tag')          # 找第一个标签
-- soup.find_all('tag')      # 找所有标签
-- soup.select('selector')   # CSS选择器
-- element.text              # 获取文本内容
-- element['attr']           # 获取属性值
+- soup.find('tag')          # 找第一个标签（只找一个）
+- soup.find_all('tag')      # 找所有标签（找所有匹配的）
+- soup.select('selector')   # CSS选择器（用更精确的方式找）
+- element.text              # 获取文本内容（只取文字，不要标签）
+- element['attr']           # 获取属性值（比如链接地址）
+
+【小贴士：class参数为什么要加下划线？】
+在Python中，class是保留字（用来定义类），不能直接用。
+所以BeautifulSoup用 class_（带下划线）来表示HTML的class属性。
 """
 
 def section_3_parse_html():
@@ -374,7 +386,8 @@ def section_3_parse_html():
     print("-" * 40)
 
     # 创建BeautifulSoup对象
-    # 'html.parser' 是Python内置的解析器
+    # 参数1: html - 要解析的HTML代码（字符串）
+    # 参数2: 'html.parser' - 解析器（理解为"翻译官"，把HTML翻译成Python能理解的结构）
     soup = BeautifulSoup(html, 'html.parser')
 
     print(f"网页标题: {soup.title.text}")
@@ -382,11 +395,12 @@ def section_3_parse_html():
     print("\n【示例2】find() - 查找第一个匹配的标签")
     print("-" * 40)
 
-    # find() 只返回第一个匹配的元素
+    # find() 只返回第一个匹配的元素（找到就停，不继续找了）
     first_p = soup.find('p')
     print(f"第一个<p>标签: {first_p.text}")
 
     # 可以按class查找
+    # 注意：class_ 有下划线，因为class是Python的保留字
     intro = soup.find('p', class_='intro')
     print(f"class为intro的<p>: {intro.text}")
 
@@ -413,6 +427,12 @@ def section_3_parse_html():
     print("\n【示例4】CSS选择器 - select() 和 select_one()")
     print("-" * 40)
 
+    # CSS选择器是什么？
+    # CSS选择器就像"地址"，可以精确定位网页中的元素
+    # .book-list 表示 class="book-list" 的元素
+    # .book-list .book 表示 book-list 里面的 class="book" 的元素
+    # #price 表示 id="price" 的元素（用#号）
+
     # select_one() 返回第一个匹配的元素
     first_link = soup.select_one('a')
     print(f"第一个链接: {first_link.text} -> {first_link['href']}")
@@ -423,7 +443,8 @@ def section_3_parse_html():
     for link in all_links:
         print(f"  - {link.text}: {link['href']}")
 
-    # 更复杂的选择器
+    # 更复杂的选择器（层层递进，精确指定位置）
+    # .book-list .book .title 意思是：在 book-list 里面的 book 里面的 title
     book_titles = soup.select('.book-list .book .title')
     print(f"\n所有书名（CSS选择器）:")
     for title in book_titles:
@@ -455,8 +476,10 @@ def parse_html(html_content, parser='html.parser'):
 """
 📖 第4节：提取数据
 
+上一节我们学会了怎么"找到"标签，这一节学习怎么"取出"标签里的内容。
+
 【提取文本】
-element.text          # 获取标签内的纯文本
+element.text          # 获取标签内的纯文本（最常用）
 element.string        # 获取唯一字符串（如果只有一个字符串）
 element.get_text()    # 获取所有文本，可设置分隔符
 
@@ -572,7 +595,9 @@ def section_4_extract_data():
     print(f"售价: {sale_price}")
 
     # 计算折扣
-    import re
+    import re  # re是正则表达式模块，用于在文本中搜索特定模式
+    # r'[\d.]+' 是一个正则表达式，意思是"找出所有的数字和小数点"
+    # 比如在 "¥99.00" 中，会找到 "99.00"
     orig = float(re.search(r'[\d.]+', original_price).group())
     sale = float(re.search(r'[\d.]+', sale_price).group())
     discount = sale / orig * 10
@@ -627,19 +652,19 @@ def extract_attribute(element, attr, default=None):
 📖 第5节：保存数据
 
 【常见的保存方式】
-1. CSV文件 - 表格数据，可用Excel打开
-2. JSON文件 - 结构化数据，易于交换
-3. TXT文件 - 简单文本
-4. 数据库 - 大量数据，如SQLite
+1. CSV文件 - 表格数据，可以用Excel打开（类似Excel表格）
+2. JSON文件 - 结构化数据，易于程序读取（类似Python的字典和列表）
+3. TXT文件 - 简单文本，人眼容易阅读
+4. 数据库 - 大量数据时使用，如SQLite（一个轻量级的数据库，就是一个文件）
 
 【CSV格式】
-逗号分隔值，例如：
+CSV就是"逗号分隔值"，每行是一条数据，用逗号分开：
 姓名,年龄,城市
 张三,18,北京
 李四,20,上海
 
 【JSON格式】
-JavaScript对象表示法，例如：
+JSON就是用花括号{}和方括号[]组织数据，类似Python的字典：
 {
     "name": "张三",
     "age": 18,
@@ -751,13 +776,25 @@ def section_5_save_data():
 
     import sqlite3
 
+    # SQLite是一个轻量级数据库，数据就存在一个.db文件里
+    # 不需要安装额外的数据库软件，非常适合初学者
     db_file = os.path.join(save_dir, "books.db")
 
     # 连接数据库（不存在则创建）
     conn = sqlite3.connect(db_file)
+
+    # cursor是"游标"，用来执行SQL命令
+    # 可以把它理解为"数据库的操作员"
     cursor = conn.cursor()
 
-    # 创建表
+    # 创建表（类似创建一个Excel工作表）
+    # SQL语句说明：
+    # CREATE TABLE IF NOT EXISTS - 如果表不存在就创建
+    # books - 表名
+    # id, title, author, price - 列名
+    # INTEGER PRIMARY KEY AUTOINCREMENT - 自动递增的整数主键
+    # TEXT - 文本类型
+    # REAL - 小数类型
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS books (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -768,13 +805,16 @@ def section_5_save_data():
     ''')
 
     # 插入数据
+    # INSERT INTO ... VALUES ... 是插入数据的SQL语句
+    # ? 是占位符，后面的元组会依次填入
     for book in books:
         cursor.execute(
             'INSERT INTO books (title, author, price) VALUES (?, ?, ?)',
             (book['title'], book['author'], book['price'])
         )
 
-    # 提交事务
+    # commit是"提交"，把改动保存到数据库文件
+    # 如果忘记commit，数据不会被保存！
     conn.commit()
 
     # 查询数据
@@ -870,17 +910,17 @@ def save_to_json(data, filepath, indent=4):
 网站为了保护服务器和防止数据被滥用，会采取一些措施阻止爬虫。
 
 【常见的反爬虫措施】
-1. 检查User-Agent - 识别是否是浏览器
-2. 检查Referer - 判断请求来源
-3. IP限制 - 同一IP请求次数过多
+1. 检查User-Agent - 识别是不是浏览器（User-Agent就是浏览器的"身份证"）
+2. 检查Referer - 判断你是从哪个页面来的（Referer就是"来源"）
+3. IP限制 - 同一IP请求次数过多会被封
 4. 验证码 - 需要人工验证
 5. 登录验证 - 需要登录才能访问
 
 【应对方法】
-1. 设置User-Agent - 模拟浏览器
-2. 添加Referer - 模拟从网站内部访问
-3. 设置请求延迟 - 避免请求过于频繁
-4. 使用代理IP - 更换IP地址
+1. 设置User-Agent - 假装自己是浏览器
+2. 添加Referer - 假装从网站内部访问
+3. 设置请求延迟 - 不要太快，像人一样慢慢访问
+4. 使用代理IP - 换个IP地址
 5. 处理Cookie - 保持登录状态
 
 【重要提醒】
@@ -909,6 +949,11 @@ def section_6_anti_crawler():
 
     print("\n【示例1】设置User-Agent")
     print("-" * 40)
+
+    # User-Agent是什么？
+    # User-Agent是浏览器告诉服务器"我是谁"的标识
+    # 比如"我是Chrome浏览器，版本120，运行在Windows上"
+    # 网站通过User-Agent判断你是真人浏览器还是爬虫程序
 
     # 常用的User-Agent
     user_agents = [
@@ -976,6 +1021,11 @@ def section_6_anti_crawler():
 
     print("\n【示例4】Session保持会话")
     print("-" * 40)
+
+    # Session是什么？
+    # Session可以保持Cookie（就像保持登录状态）
+    # 比如登录后访问其他页面，Session会自动带上登录信息
+    # 不用Session的话，每次请求都是"新的"，登录状态会丢失
 
     # 使用Session可以保持Cookie
     session = requests.Session()
@@ -1076,9 +1126,11 @@ def crawl_with_delay(url, delay_range=(1, 3), max_retries=3):
 【翻页的两种方式】
 1. URL规律翻页 - 页码直接体现在URL中
    例如：/page/1, /page/2, /page/3...
+   这种最容易，直接替换URL中的数字就行
 
 2. 参数翻页 - 通过URL参数控制页码
    例如：?page=1, ?page=2, ?page=3...
+   问号后面的是参数，用 & 连接多个参数
 
 【翻页爬取的步骤】
 1. 分析翻页规律
@@ -1167,8 +1219,9 @@ def crawl_multiple_pages(base_url, max_pages=5, delay=(1, 2)):
     参数说明：
         base_url (str): 基础URL，使用 {} 作为页码占位符
                         例如："https://example.com/page/{}"
+                        {} 会被替换成实际的页码数字
         max_pages (int): 最大爬取页数
-        delay (tuple): 请求延迟范围（秒）
+        delay (tuple): 请求延迟范围（秒），避免请求太快被封
 
     返回值：
         list: 所有页面提取的数据列表

@@ -155,6 +155,10 @@ CREATE TABLE scores (
     exam_date DATE COMMENT '考试日期',
     FOREIGN KEY (student_id) REFERENCES students(id),
     FOREIGN KEY (course_id) REFERENCES courses(id)
+    -- 外键（FOREIGN KEY）作用：
+    -- 1. 确保数据正确：student_id 必须是 students 表中存在的 id
+    -- 2. 级联操作：删除学生时，该学生的成绩也会自动删除
+    -- 就像：成绩表里的学生编号必须对应一个真实存在的学生
 ) COMMENT '学生成绩表';
 
 -- 查看所有表
@@ -171,11 +175,11 @@ DATETIME     - 日期时间（YYYY-MM-DD HH:MM:SS）
 TEXT         - 长文本
 
 【约束速查】
-PRIMARY KEY     - 主键（唯一标识每一行）
-AUTO_INCREMENT  - 自动递增
-NOT NULL        - 不允许为空
-DEFAULT         - 默认值
-FOREIGN KEY     - 外键（关联其他表）
+PRIMARY KEY     - 主键（唯一标识每一行，就像身份证号）
+AUTO_INCREMENT  - 自动递增（新数据自动+1，不用手动填）
+NOT NULL        - 不允许为空（必填项）
+DEFAULT         - 默认值（不填时自动使用这个值）
+FOREIGN KEY     - 外键（关联其他表，保证数据一致性）
 */
 
 -- 练习3：创建一个"图书"表，包含：编号、书名、作者、价格、出版日期
@@ -511,13 +515,15 @@ HAVING COUNT(*) >= 2;
 -- SELECT * FROM students, courses;
 
 -- 内连接（INNER JOIN）：只返回两表都有匹配的记录
+-- 用生活例子理解：就像"配对游戏"，只有两边都存在才显示
 SELECT
     students.name AS 学生姓名,
     courses.name AS 课程名称,
     scores.score AS 成绩
 FROM scores
-INNER JOIN students ON scores.student_id = students.id
-INNER JOIN courses ON scores.course_id = courses.id;
+INNER JOIN students ON scores.student_id = students.id  -- 成绩表和学生表连接
+INNER JOIN courses ON scores.course_id = courses.id;    -- 再和课程表连接
+-- 结果：只显示有成绩的学生和课程
 
 -- 使用表别名简化
 SELECT
@@ -529,13 +535,16 @@ JOIN students s ON sc.student_id = s.id
 JOIN courses c ON sc.course_id = c.id;
 
 -- 左连接（LEFT JOIN）：返回左表所有记录，右表没有则为NULL
+-- 用生活例子理解：以左边的学生表为主，即使学生没有成绩也要显示
+-- 就像点名：每个学生都要喊到，没交卷的显示"未考试"
 SELECT
     s.name AS 学生,
     c.name AS 课程,
     sc.score AS 成绩
 FROM students s
-LEFT JOIN scores sc ON s.id = sc.student_id
+LEFT JOIN scores sc ON s.id = sc.student_id  -- 以学生表为主
 LEFT JOIN courses c ON sc.course_id = c.id;
+-- 结果：所有学生都会显示，没成绩的学生课程和成绩显示NULL
 
 -- 查询每个学生的平均成绩
 SELECT

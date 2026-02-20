@@ -163,51 +163,61 @@ def section_2_file_operations():
     # 设置练习目录
     practice_dir = "test_files/practice_section2"
 
-    print("\n【核心模块介绍】")
+    print("\n【先了解一个重要概念：模块】")
+    print("-" * 40)
+    print("模块就像是'工具箱'，里面装着各种工具（函数）")
+    print("比如：你要修东西，需要打开工具箱拿锤子、螺丝刀")
+    print("Python：你要操作文件，需要导入(import)相应的模块")
+    print()
+    print("【本节用到的模块】")
     print("-" * 40)
     print("os模块     - 操作系统功能，如创建文件夹、检查路径")
+    print("             （就像电脑的'文件管理器'）")
     print("shutil模块 - 高级文件操作，如复制、移动、删除")
+    print("             （就像'复制粘贴'功能的升级版）")
 
     print("\n【动手实践】让我们创建一些文件和文件夹")
     print("-" * 40)
 
     # 1. 创建文件夹
     print("\n1️⃣  创建文件夹")
-    if not os.path.exists(practice_dir):
-        os.makedirs(practice_dir)
+    if not os.path.exists(practice_dir):  # exists = 存在。先检查文件夹是否已存在
+        os.makedirs(practice_dir)          # makedirs = make directories，创建文件夹（包括中间的文件夹）
         print(f"   ✅ 创建文件夹：{practice_dir}")
     else:
         print(f"   📁 文件夹已存在：{practice_dir}")
 
     # 2. 创建文件
     print("\n2️⃣  创建文件")
-    test_file = os.path.join(practice_dir, "hello.txt")
+    test_file = os.path.join(practice_dir, "hello.txt")  # join = 连接，把文件夹路径和文件名拼起来
+    # with open(...) as f 是一种安全的文件操作方式，用完自动关闭文件
+    # "w" 表示写入模式（write），"utf-8" 是编码方式（支持中文）
     with open(test_file, "w", encoding="utf-8") as f:
-        f.write("你好，这是自动化创建的文件！\n")
+        f.write("你好，这是自动化创建的文件！\n")  # \n 表示换行
         f.write("Python自动化真强大！\n")
     print(f"   ✅ 创建文件：{test_file}")
 
     # 3. 复制文件
     print("\n3️⃣  复制文件")
     copy_file = os.path.join(practice_dir, "hello_copy.txt")
-    shutil.copy(test_file, copy_file)
+    shutil.copy(test_file, copy_file)  # copy = 复制，把源文件复制到目标位置
     print(f"   ✅ 复制到：{copy_file}")
 
     # 4. 移动/重命名文件
     print("\n4️⃣  重命名文件")
     renamed_file = os.path.join(practice_dir, "hello_renamed.txt")
-    shutil.move(copy_file, renamed_file)
+    shutil.move(copy_file, renamed_file)  # move = 移动，也可以用来重命名（在同一个文件夹里移动就是改名）
     print(f"   ✅ 重命名为：{renamed_file}")
 
     # 5. 列出文件夹内容
     print("\n5️⃣  列出文件夹内容")
-    files = os.listdir(practice_dir)
-    for f in files:
+    files = os.listdir(practice_dir)  # listdir = list directory，列出文件夹里所有文件名
+    for f in files:  # 用循环一个一个打印出来
         print(f"   📄 {f}")
 
     # 6. 检查文件信息
     print("\n6️⃣  检查文件信息")
-    file_size = os.path.getsize(test_file)
+    file_size = os.path.getsize(test_file)  # getsize = 获取文件大小（单位：字节）
     print(f"   文件大小：{file_size} 字节")
 
     # 清理演示文件
@@ -278,14 +288,42 @@ def section_3_batch_rename():
         参数：文件名 - 包含扩展名的文件名
         返回：(文件名, 扩展名) 元组
         示例：os.path.splitext("photo.jpg") → ("photo", ".jpg")
+
+    【小知识：什么是扩展名？】
+    扩展名就是文件名后面那个小尾巴，告诉我们文件是什么类型：
+    - .jpg, .png, .gif → 图片文件
+    - .txt, .doc, .pdf → 文档文件
+    - .mp3, .wav       → 音频文件
+    - .mp4, .avi       → 视频文件
+
+    【小知识：什么是元组？】
+    元组(tuple)就像一个"打包盒"，可以把多个东西放在一起。
+    比如：os.path.splitext("photo.jpg") 返回 ("photo", ".jpg")
+    用法：
+        result = os.path.splitext("photo.jpg")  # 得到 ("photo", ".jpg")
+        name = result[0]   # 取第一个，得到 "photo"
+        ext = result[1]    # 取第二个，得到 ".jpg"
+
+    更简单的写法（拆包）：
+        name, ext = os.path.splitext("photo.jpg")  # 一步到位
+        # name = "photo", ext = ".jpg"
     """
     print("=" * 60)
     print("第3节：批量重命名")
     print("=" * 60)
 
+    # 先解释一下扩展名的概念
+    print("\n【小知识：什么是扩展名？】")
+    print("-" * 40)
+    print("扩展名就是文件名后面的小尾巴，告诉我们文件是什么类型：")
+    print("  .jpg, .png, .gif → 图片文件")
+    print("  .txt, .doc, .pdf → 文档文件")
+    print("  .mp3, .wav       → 音频文件")
+    print("  .mp4, .avi       → 视频文件")
+
     # 创建演示文件
     demo_dir = "test_files/rename_demo"
-    os.makedirs(demo_dir, exist_ok=True)
+    os.makedirs(demo_dir, exist_ok=True)  # exist_ok=True 表示"如果已存在也不报错"
 
     print("\n【准备工作】创建演示文件...")
     for i in range(1, 6):
@@ -311,13 +349,13 @@ def section_3_batch_rename():
         示例调用：
             add_prefix("photos", "2024_")
         """
-        for filename in os.listdir(folder):
-            old_path = os.path.join(folder, filename)
-            # 跳过文件夹
+        for filename in os.listdir(folder):  # 遍历文件夹里的每个文件
+            old_path = os.path.join(folder, filename)  # 拼出完整的旧路径
+            # 跳过文件夹（我们只处理文件，不处理文件夹）
             if os.path.isfile(old_path):
-                new_name = prefix + filename
-                new_path = os.path.join(folder, new_name)
-                os.rename(old_path, new_path)
+                new_name = prefix + filename  # 给文件名加上前缀，如 "photo.jpg" → "vacation_photo.jpg"
+                new_path = os.path.join(folder, new_name)  # 拼出完整的新路径
+                os.rename(old_path, new_path)  # 执行重命名
                 print(f"  {filename} → {new_name}")
 
     add_prefix(demo_dir, "vacation_")
@@ -339,9 +377,10 @@ def section_3_batch_rename():
             change_extension("photos", ".jpg", ".png")
         """
         for filename in os.listdir(folder):
-            if filename.endswith(old_ext):
-                name = os.path.splitext(filename)[0]
-                new_name = name + new_ext
+            if filename.endswith(old_ext):  # endswith = 以...结尾，检查文件扩展名是否匹配
+                # 把文件名拆成"名字"和"扩展名"两部分
+                name = os.path.splitext(filename)[0]  # [0] 取第一部分（文件名）
+                new_name = name + new_ext  # 用新扩展名替换旧的
                 old_path = os.path.join(folder, filename)
                 new_path = os.path.join(folder, new_name)
                 os.rename(old_path, new_path)
@@ -366,11 +405,21 @@ def section_3_batch_rename():
             format_numbers("photos", "photo_", 3)
             # 结果：photo_001.png, photo_002.png...
         """
+        # 下面这行是"列表推导式"，简单说就是：从文件夹里挑出所有文件（不要文件夹）
+        # 等价于：
+        # files = []
+        # for f in os.listdir(folder):
+        #     if os.path.isfile(os.path.join(folder, f)):
+        #         files.append(f)
         files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-        files.sort()
+        files.sort()  # 按名字排序
 
+        # enumerate 会在遍历时自动给每个元素编号
+        # enumerate(files, 1) 表示从1开始编号
         for i, filename in enumerate(files, 1):
-            ext = os.path.splitext(filename)[1]
+            ext = os.path.splitext(filename)[1]  # 获取扩展名
+            # zfill = zero fill，用0填充到指定位数
+            # str(1).zfill(3) = "001", str(10).zfill(3) = "010"
             new_name = f"{prefix}{str(i).zfill(digits)}{ext}"
             old_path = os.path.join(folder, filename)
             new_path = os.path.join(folder, new_name)
@@ -445,10 +494,42 @@ def section_4_file_organizer():
     1. 字典的使用
     2. 文件扩展名判断
     3. 文件夹创建和移动
+
+    【小知识：什么是字典？】
+    字典(dict)就像一本"查询手册"，通过"关键词"查找对应的内容。
+
+    生活例子：
+        英汉词典：查 "apple" → 找到 "苹果"
+        电话簿：查 "张三" → 找到 "138xxxx"
+
+    Python字典：
+        scores = {"小明": 90, "小红": 95, "小刚": 80}
+        # 大括号{}表示字典
+        # "小明"叫"键"（key），90叫"值"（value）
+        # 查询：scores["小明"] → 得到 90
+
+    本节用法：
+        categories = {"图片": [".jpg", ".png"], "文档": [".txt", ".pdf"]}
+        # 查 ".jpg" 属于哪个类型 → 找到 "图片"
     """
     print("=" * 60)
     print("第4节：文件整理器")
     print("=" * 60)
+
+    # 先解释字典的概念
+    print("\n【小知识：什么是字典？】")
+    print("-" * 40)
+    print("字典(dict)就像一本'查询手册'，通过关键词查找内容")
+    print()
+    print("生活例子：")
+    print("  英汉词典：查 'apple' → 找到 '苹果'")
+    print("  电话簿：查 '张三' → 找到电话号码")
+    print()
+    print("Python字典：")
+    print("  scores = {'小明': 90, '小红': 95, '小刚': 80}")
+    print("  大括号{}表示字典，'小明'是键，90是值")
+    print("  查询：scores['小明'] → 得到 90")
+    print()
 
     # 创建演示文件夹
     demo_dir = "test_files/messy_folder"
@@ -493,8 +574,8 @@ def section_4_file_organizer():
             print(result)
         """
         # 定义文件类型分类规则
-        # key: 文件夹名称
-        # value: 该类型包含的扩展名列表
+        # 字典的"键"是文件夹名称，"值"是该类型的扩展名列表
+        # 比如：".jpg" 属于 "图片" 类型
         categories = {
             "图片": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"],
             "文档": [".txt", ".doc", ".docx", ".pdf", ".ppt", ".pptx", ".xls", ".xlsx"],
@@ -502,39 +583,40 @@ def section_4_file_organizer():
             "音乐": [".mp3", ".wav", ".flac", ".aac", ".ogg"],
             "压缩包": [".zip", ".rar", ".7z", ".tar", ".gz"],
             "代码": [".py", ".js", ".html", ".css", ".java", ".cpp"],
-            "其他": []  # 其他类型放在这里
+            "其他": []  # 其他类型放在这里（空列表表示没有指定扩展名）
         }
 
         # 统计每种类型的数量
-        stats = {cat: 0 for cat in categories}
+        # 这又是"字典推导式"，等价于创建一个全0的统计表
+        stats = {cat: 0 for cat in categories}  # {"图片": 0, "文档": 0, ...}
 
         # 遍历文件夹中的所有文件
         for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
+            file_path = os.path.join(folder, filename)  # 拼出完整路径
 
-            # 跳过文件夹
+            # 跳过文件夹（只处理文件）
             if not os.path.isfile(file_path):
                 continue
 
-            # 获取文件扩展名（小写）
+            # 获取文件扩展名（小写），.lower()把字母变成小写
             ext = os.path.splitext(filename)[1].lower()
 
-            # 确定文件类型
-            target_folder = "其他"
-            for category, extensions in categories.items():
-                if ext in extensions:
-                    target_folder = category
-                    break
+            # 确定文件属于哪个类型
+            target_folder = "其他"  # 默认是"其他"
+            for category, extensions in categories.items():  # .items() 同时获取键和值
+                if ext in extensions:  # 如果扩展名在这个类型的列表里
+                    target_folder = category  # 找到了！
+                    break  # 不用继续找了
 
             # 创建目标文件夹
             target_path = os.path.join(folder, target_folder)
-            os.makedirs(target_path, exist_ok=True)
+            os.makedirs(target_path, exist_ok=True)  # 如果已存在也不报错
 
-            # 移动文件
+            # 移动文件到目标文件夹
             new_path = os.path.join(target_path, filename)
             shutil.move(file_path, new_path)
 
-            # 更新统计
+            # 更新统计（该类型的数量+1）
             stats[target_folder] += 1
             print(f"  📁 {filename} → {target_folder}/")
 
@@ -615,10 +697,37 @@ def section_5_excel_automation():
     2. 读取单元格数据
     3. 写入单元格数据
     4. 批量处理数据
+
+    【小知识：什么是库？】
+    库（Library）就是别人写好的代码集合，我们可以直接使用。
+    就像：
+        你想画画 → 可以买颜料（用别人做好的工具）
+        而不是自己造颜料（从零开始）
+
+    openpyxl是一个专门处理Excel文件的库，名字拆解：
+        open = 开放/开源
+        py  = Python
+        xl  = Excel
+
+    【安装方法】
+    打开命令行（终端），输入：
+        pip install openpyxl
+    等待安装完成即可。
     """
     print("=" * 60)
     print("第5节：Excel自动化")
     print("=" * 60)
+
+    print("\n【小知识：什么是库？】")
+    print("-" * 40)
+    print("库（Library）就是别人写好的代码集合，我们可以直接使用")
+    print("就像：你想画画 → 买颜料（用别人做好的工具）")
+    print("而不是自己造颜料（从零开始）")
+    print()
+    print("openpyxl是专门处理Excel的库：")
+    print("  open = 开放/开源")
+    print("  py  = Python")
+    print("  xl  = Excel")
 
     print("\n【准备工作】")
     print("-" * 40)
@@ -646,16 +755,22 @@ def section_5_excel_automation():
     print("\n【示例1】创建Excel文件并写入数据")
     print("-" * 40)
 
-    # 创建工作簿
+    # 先理解Excel的结构：
+    # Excel文件叫"工作簿"(Workbook)
+    # 一个工作簿可以有多"页"，每页叫"工作表"(Worksheet)
+    # 每个工作表由很多"格子"组成，每个格子叫"单元格"(Cell)
+    # 单元格用字母+数字表示位置，如 A1, B2, C3
+
+    # 创建工作簿（相当于新建一个Excel文件）
     wb = Workbook()
-    ws = wb.active
-    ws.title = "成绩表"
+    ws = wb.active  # active = 当前激活的工作表（第一页）
+    ws.title = "成绩表"  # 给工作表起个名字（Excel底部的标签）
 
-    # 写入表头
+    # 写入表头（第一行）
     headers = ["姓名", "语文", "数学", "英语", "总分", "平均分"]
-    ws.append(headers)
+    ws.append(headers)  # append = 追加，把一行数据加到表格末尾
 
-    # 写入学生数据
+    # 写入学生数据（要写入的数据）
     students = [
         ["小明", 85, 92, 88],
         ["小红", 92, 88, 95],
@@ -666,10 +781,11 @@ def section_5_excel_automation():
 
     for student in students:
         # 计算总分和平均分
-        total = sum(student[1:])
-        avg = total / 3
-        student.extend([total, round(avg, 1)])
-        ws.append(student)
+        # student[1:] 表示从第2个元素开始取（跳过姓名）
+        total = sum(student[1:])  # sum = 求和
+        avg = total / 3  # 平均分 = 总分 / 科目数
+        student.extend([total, round(avg, 1)])  # extend = 扩展列表，把总分和平均分加进去
+        ws.append(student)  # 把这行数据写入Excel
 
     # 保存文件
     excel_file = os.path.join(demo_dir, "student_scores.xlsx")
@@ -679,17 +795,20 @@ def section_5_excel_automation():
     print("\n【示例2】读取Excel数据")
     print("-" * 40)
 
-    # 打开文件
-    wb = load_workbook(excel_file)
-    ws = wb.active
+    # 打开已存在的Excel文件
+    wb = load_workbook(excel_file)  # load = 加载，加载已有文件
+    ws = wb.active  # 获取当前活动的工作表
 
     print("学生成绩数据：")
     print("-" * 50)
 
     # 读取所有数据
+    # iter_rows = iterate rows，遍历行
+    # values_only=True 表示只获取值（不要单元格对象）
     for row in ws.iter_rows(values_only=True):
         # 格式化输出
-        if row[0] == "姓名":  # 表头
+        if row[0] == "姓名":  # 这是表头行
+            # :<8 表示左对齐，占8个字符宽度（让表格整齐）
             print(f"{row[0]:<8} {row[1]:<6} {row[2]:<6} {row[3]:<6} {row[4]:<6} {row[5]:<6}")
             print("-" * 50)
         else:
@@ -698,23 +817,27 @@ def section_5_excel_automation():
     print("\n【示例3】设置单元格样式")
     print("-" * 40)
 
-    # 设置表头样式
-    header_font = Font(bold=True, color="FFFFFF")  # 白色加粗
-    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")  # 蓝色背景
-    center_align = Alignment(horizontal="center", vertical="center")
+    # 样式就是让Excel更好看（字体、颜色、对齐方式等）
 
-    for cell in ws[1]:  # 第一行（表头）
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = center_align
+    # 设置表头样式
+    header_font = Font(bold=True, color="FFFFFF")  # bold=加粗，color=白色字体
+    # PatternFill = 填充图案（背景色）
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")  # 蓝色背景
+    center_align = Alignment(horizontal="center", vertical="center")  # 居中对齐
+
+    # 给第一行（表头）设置样式
+    for cell in ws[1]:  # ws[1] 表示第一行
+        cell.font = header_font  # 设置字体
+        cell.fill = header_fill  # 设置背景色
+        cell.alignment = center_align  # 设置对齐
 
     # 设置所有单元格居中
-    for row in ws.iter_rows():
-        for cell in row:
+    for row in ws.iter_rows():  # 遍历每一行
+        for cell in row:  # 遍历行中的每个单元格
             cell.alignment = center_align
 
-    # 调整列宽
-    ws.column_dimensions['A'].width = 10
+    # 调整列宽（让内容显示完整）
+    ws.column_dimensions['A'].width = 10  # A列宽度设为10
     for col in ['B', 'C', 'D', 'E', 'F']:
         ws.column_dimensions[col].width = 8
 
@@ -829,16 +952,19 @@ Python可以用来做网站、游戏、数据分析。
         示例调用：
             count = replace_in_file("test.txt", "Python", "Java")
         """
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
+        # 第一步：读取文件内容
+        with open(file_path, "r", encoding="utf-8") as f:  # "r" = read，读取模式
+            content = f.read()  # 读取全部内容
 
-        count = content.count(old_text)
-        new_content = content.replace(old_text, new_text)
+        # 第二步：统计并替换
+        count = content.count(old_text)  # count = 计数，看看有多少个要替换的
+        new_content = content.replace(old_text, new_text)  # replace = 替换
 
-        with open(file_path, "w", encoding="utf-8") as f:
+        # 第三步：写回文件
+        with open(file_path, "w", encoding="utf-8") as f:  # "w" = write，写入模式
             f.write(new_content)
 
-        return count
+        return count  # 返回替换了多少处
 
     print("原始内容：")
     with open(test_file, "r", encoding="utf-8") as f:
@@ -888,21 +1014,33 @@ Python可以用来做网站、游戏、数据分析。
 
         示例调用：
             stats = analyze_log("server.log")
-        """
-        stats = {"INFO": 0, "WARNING": 0, "ERROR": 0}
-        errors = []
 
+        【什么是日志？】
+        日志(log)就是程序运行时记录的"日记"。
+        比如：[2024-01-15 08:00:01] INFO: 服务器启动
+        程序会记录什么时候发生了什么事，方便排查问题。
+
+        日志级别：
+            INFO    = 普通信息（正常情况）
+            WARNING = 警告（需要注意）
+            ERROR   = 错误（出问题了）
+        """
+        # 初始化统计字典
+        stats = {"INFO": 0, "WARNING": 0, "ERROR": 0}
+        errors = []  # 专门记录所有错误信息
+
+        # 按行读取文件
         with open(file_path, "r", encoding="utf-8") as f:
-            for line in f:
-                if "INFO" in line:
-                    stats["INFO"] += 1
+            for line in f:  # 一行一行地读
+                if "INFO" in line:  # 如果这行包含"INFO"
+                    stats["INFO"] += 1  # INFO计数+1
                 elif "WARNING" in line:
                     stats["WARNING"] += 1
                 elif "ERROR" in line:
                     stats["ERROR"] += 1
-                    errors.append(line.strip())
+                    errors.append(line.strip())  # strip() 去掉首尾空白字符
 
-        return stats, errors
+        return stats, errors  # 返回两个值：统计结果和错误列表
 
     stats, errors = analyze_log(log_file)
 
@@ -1053,7 +1191,12 @@ def section_7_scheduled_tasks():
     print("\n【核心概念】")
     print("-" * 40)
     print("""
-定时任务 = 让程序按计划自动执行
+定时任务 = 让程序按计划自动执行（像闹钟一样）
+
+生活中的定时任务：
+  - 闹钟：每天早上7点响
+  - 热水器：每天固定时间加热
+  - 作业提醒：每周日晚上提醒
 
 常见的定时方式：
   - 每隔N秒/分钟/小时执行
@@ -1077,9 +1220,11 @@ def section_7_scheduled_tasks():
             simple_timer(5, "时间到！该休息了！")
         """
         print(f"⏰ 设置 {seconds} 秒后的提醒...")
+        # range(seconds, 0, -1) 表示从seconds倒数到1
+        # 比如 range(5, 0, -1) = [5, 4, 3, 2, 1]
         for i in range(seconds, 0, -1):
-            print(f"  倒计时: {i}秒", end="\r")
-            time.sleep(1)
+            print(f"  倒计时: {i}秒", end="\r")  # end="\r" 让光标回到行首，实现原地更新
+            time.sleep(1)  # sleep = 睡眠，暂停1秒
         print(f"\n🔔 {message}")
 
     # 演示（只等3秒）
@@ -1255,6 +1400,8 @@ def section_8_comprehensive_case():
             整理统计信息
         """
         # 科目关键词映射
+        # 用字典记录：哪些关键词代表哪个科目
+        # 比如：文件名里有"math"就归到"数学"文件夹
         subjects = {
             "数学": ["math"],
             "语文": ["chinese", "chinese_essay", "作文"],
@@ -1267,27 +1414,32 @@ def section_8_comprehensive_case():
             "政治": ["politics"]
         }
 
-        # 获取今天的日期
+        # 获取今天的日期，格式如：20240115
+        # datetime.now() = 当前时间
+        # .strftime("%Y%m%d") = 格式化为 年年年年月月日日
         today = datetime.now().strftime("%Y%m%d")
 
-        # 统计
+        # 初始化统计（每个科目开始都是0）
         stats = {subject: 0 for subject in subjects}
-        stats["其他"] = 0
+        stats["其他"] = 0  # 还有"其他"类别
 
         # 处理每个文件
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
 
+            # 跳过文件夹，只处理文件
             if not os.path.isfile(file_path):
                 continue
 
-            # 判断科目
-            subject = "其他"
-            filename_lower = filename.lower()
+            # 判断这个文件属于哪个科目
+            subject = "其他"  # 默认是"其他"
+            filename_lower = filename.lower()  # 转小写，方便匹配
 
+            # any()函数：只要有一个条件为True，就返回True
+            # 这行代码的意思是：如果文件名包含任何一个关键词，就匹配成功
             for subj, keywords in subjects.items():
                 if any(keyword in filename_lower for keyword in keywords):
-                    subject = subj
+                    subject = subj  # 找到科目了！
                     break
 
             # 创建科目文件夹
@@ -1295,6 +1447,7 @@ def section_8_comprehensive_case():
             os.makedirs(subject_folder, exist_ok=True)
 
             # 新文件名：日期_原文件名
+            # 比如：math_homework.pdf → 20240115_math_homework.pdf
             new_name = f"{today}_{filename}"
             new_path = os.path.join(subject_folder, new_name)
 
