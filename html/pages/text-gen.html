@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文本生成工具 - 安全守护者</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <style>
+    /* ===== Tab 导航 ===== */
+    .tab-nav {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+    .tab-nav .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--text-secondary);
+    }
+    .tab-nav .tab-btn:hover {
+      background: rgba(255,255,255,0.6);
+      color: var(--text);
+    }
+    .tab-nav .tab-btn.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+    .tab-panel.active { display: block; }
+
+    /* ===== 侧边栏分组 ===== */
+    .sidebar-section {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .sidebar-section h4 {
+      font-size: 13px;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    /* ===== 结果操作栏 ===== */
+    .result-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .result-toolbar .left {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ===== Markdown 渲染结果 ===== */
+    .result-content {
+      background: #FAFAFA;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      min-height: 300px;
+      font-size: 14px;
+      line-height: 1.9;
+      overflow-y: auto;
+      max-height: calc(100vh - 260px);
+    }
+    .result-content h1 { font-size: 22px; margin: 16px 0 12px; color: var(--text); border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; }
+    .result-content h2 { font-size: 18px; margin: 14px 0 10px; color: var(--primary-dark); }
+    .result-content h3 { font-size: 16px; margin: 12px 0 8px; color: var(--text); }
+    .result-content p { margin: 8px 0; }
+    .result-content ul, .result-content ol { padding-left: 24px; margin: 8px 0; }
+    .result-content li { margin: 4px 0; }
+    .result-content strong { color: var(--primary-dark); }
+    .result-content blockquote {
+      border-left: 4px solid var(--primary);
+      padding: 8px 16px;
+      margin: 12px 0;
+      background: var(--primary-light);
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .result-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+    }
+    .result-content th, .result-content td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 13px;
+    }
+    .result-content th {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    /* ===== 问答题目样式 ===== */
+    .quiz-question {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+    .quiz-question:hover {
+      box-shadow: var(--shadow);
+    }
+    .quiz-question .q-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .quiz-question .q-number {
+      background: var(--primary);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .quiz-question .q-type {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .q-type-choice { background: #E3F2FD; color: #1565C0; }
+    .q-type-truefalse { background: #FFF3E0; color: #E65100; }
+    .quiz-question .q-text {
+      font-size: 14px;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 13px;
+    }
+    .quiz-option:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .quiz-option.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .quiz-option.correct {
+      border-color: var(--success);
+      background: #E8F5E9;
+    }
+    .quiz-option.wrong {
+      border-color: var(--danger);
+      background: var(--danger-light);
+    }
+    .quiz-option input { display: none; }
+    .quiz-option .radio-dot {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      transition: var(--transition);
+    }
+    .quiz-option.selected .radio-dot {
+      border-color: var(--primary);
+    }
+    .quiz-option.selected .radio-dot::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 8px; height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+    }
+    .quiz-tf-options {
+      display: flex;
+      gap: 8px;
+    }
+    .quiz-tf-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    .quiz-tf-btn:hover { border-color: var(--primary); }
+    .quiz-tf-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+    .quiz-tf-btn.correct { border-color: var(--success); background: #E8F5E9; color: #2E7D32; }
+    .quiz-tf-btn.wrong { border-color: var(--danger); background: var(--danger-light); color: #C62828; }
+
+    /* ===== 评分结果 ===== */
+    .score-box {
+      text-align: center;
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+    }
+    .score-box .score-num {
+      font-size: 48px;
+      font-weight: 700;
+    }
+    .score-box .score-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .score-excellent { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+    .score-excellent .score-num { color: #2E7D32; }
+    .score-good { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
+    .score-good .score-num { color: #1565C0; }
+    .score-fair { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
+    .score-fair .score-num { color: #E65100; }
+    .score-poor { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); }
+    .score-poor .score-num { color: #C62828; }
+
+    /* ===== 生成记录 ===== */
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 13px;
+    }
+    .history-item:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .history-item .hi-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .history-item .hi-icon {
+      font-size: 16px;
+    }
+    .history-item .hi-time {
+      font-size: 11px;
+      color: var(--text-light);
+    }
+    .history-item .hi-del {
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+    .history-item .hi-del:hover {
+      color: var(--danger);
+      background: var(--danger-light);
+    }
+
+    /* ===== 空状态占位 ===== */
+    .result-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      color: var(--text-light);
+    }
+    .result-empty svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    .result-empty p {
+      font-size: 14px;
+    }
+
+    /* ===== 响应式补充 ===== */
+    @media (max-width: 768px) {
+      .tab-nav { flex-wrap: wrap; }
+      .tab-nav .tab-btn { font-size: 13px; padding: 8px 12px; }
+      .result-content { max-height: none; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <div id="navbar-container"></div>
+
+  <div class="container-wide">
+    <div class="page-header">
+      <h1>自然灾害防范文本生成工具</h1>
+      <p>基于知识库数据，自动生成防灾宣传文案、应急预案和问答测试题</p>
+    </div>
+
+    <!-- Tab 导航 -->
+    <div class="tab-nav" id="mainTabNav">
+      <button class="tab-btn active" data-tab="copywriting">文案生成器</button>
+      <button class="tab-btn" data-tab="emergency">应急预案生成器</button>
+      <button class="tab-btn" data-tab="quiz">问答库生成器</button>
+    </div>
+
+    <!-- 主体：侧边栏布局 -->
+    <div class="layout-sidebar">
+
+      <!-- ===== 左侧参数配置 ===== -->
+      <aside class="sidebar" id="sidebarConfig">
+
+        <!-- 文案生成器 参数 -->
+        <div class="tab-panel active" id="sidebar-copywriting">
+          <div class="sidebar-section">
+            <h4>灾害类型</h4>
+            <div class="form-group">
+              <div id="cw-disaster-wrap"></div>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <h4>目标受众</h4>
+            <div class="form-group">
+              <select class="form-control" id="cw-audience">
+                <option value="primary">小学生</option>
+                <option value="junior">初中生</option>
+                <option value="senior">高中生</option>
+                <option value="general" selected>通用</option>
+              </select>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <h4>文案风格</h4>
+            <div class="form-group">
+              <select class="form-control" id="cw-style">
+                <option value="science">科普风格</option>
+                <option value="promo">宣传风格</option>
+                <option value="story">故事风格</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg" style="width:100%" onclick="generateCopywriting()">生成文案</button>
+        </div>
+
+        <!-- 应急预案 参数 -->
+        <div class="tab-panel" id="sidebar-emergency">
+          <div class="sidebar-section">
+            <h4>灾害类型</h4>
+            <div class="form-group">
+              <div id="em-disaster-wrap"></div>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <h4>应用场景</h4>
+            <div class="form-group">
+              <select class="form-control" id="em-scene">
+                <option value="school">学校</option>
+                <option value="home">家庭</option>
+                <option value="outdoor">户外</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg" style="width:100%" onclick="generateEmergencyPlan()">生成应急预案</button>
+        </div>
+
+        <!-- 问答库 参数 -->
+        <div class="tab-panel" id="sidebar-quiz">
+          <div class="sidebar-section">
+            <h4>灾害类型</h4>
+            <div class="form-group">
+              <div id="qz-disaster-wrap"></div>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <h4>题目数量</h4>
+            <div class="form-group">
+              <select class="form-control" id="qz-count">
+                <option value="5">5 题</option>
+                <option value="10" selected>10 题</option>
+                <option value="15">15 题</option>
+                <option value="20">20 题</option>
+              </select>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <h4>难度等级</h4>
+            <div class="form-group">
+              <select class="form-control" id="qz-difficulty">
+                <option value="easy">初级</option>
+                <option value="medium" selected>中级</option>
+                <option value="hard">高级</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg" style="width:100%" onclick="generateQuiz()">生成问答</button>
+        </div>
+
+        <!-- 生成记录 -->
+        <div class="sidebar-section" style="margin-top:16px">
+          <h4>生成记录</h4>
+          <div id="historyList">
+            <p style="font-size:12px;color:var(--text-light);text-align:center;padding:8px 0">暂无记录</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===== 右侧结果展示 ===== -->
+      <main class="main-content">
+        <!-- 文案结果 -->
+        <div class="tab-panel active" id="result-copywriting">
+          <div class="result-toolbar">
+            <div class="left">
+              <button class="btn btn-sm btn-outline" onclick="copyResult('cw')" id="cw-copy-btn" disabled>复制结果</button>
+              <button class="btn btn-sm btn-outline" onclick="exportResult('cw','txt')" id="cw-export-btn" disabled>导出 TXT</button>
+              <button class="btn btn-sm btn-outline" onclick="exportResult('cw','md')" id="cw-export-md-btn" disabled>导出 Markdown</button>
+            </div>
+          </div>
+          <div id="cw-result" class="result-content">
+            <div class="result-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <p>选择参数后点击"生成文案"</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 应急预案结果 -->
+        <div class="tab-panel" id="result-emergency">
+          <div class="result-toolbar">
+            <div class="left">
+              <button class="btn btn-sm btn-outline" onclick="copyResult('em')" id="em-copy-btn" disabled>复制结果</button>
+              <button class="btn btn-sm btn-outline" onclick="exportResult('em','md')" id="em-export-btn" disabled>导出 Markdown</button>
+            </div>
+          </div>
+          <div id="em-result" class="result-content">
+            <div class="result-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+              </svg>
+              <p>选择参数后点击"生成应急预案"</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 问答结果 -->
+        <div class="tab-panel" id="result-quiz">
+          <div class="result-toolbar">
+            <div class="left">
+              <button class="btn btn-sm btn-outline" onclick="copyResult('qz')" id="qz-copy-btn" disabled>复制结果</button>
+              <button class="btn btn-sm btn-outline" onclick="exportResult('qz','txt')" id="qz-export-btn" disabled>导出题目</button>
+            </div>
+            <div>
+              <button class="btn btn-sm btn-success" onclick="submitQuiz()" id="qz-submit-btn" style="display:none">提交答卷</button>
+              <button class="btn btn-sm btn-warning" onclick="retryQuiz()" id="qz-retry-btn" style="display:none">重新答题</button>
+            </div>
+          </div>
+          <div id="qz-score" style="display:none"></div>
+          <div id="qz-result">
+            <div class="result-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p>选择参数后点击"生成问答"</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script>
+  // ===== 页面初始化 =====
+  document.getElementById('navbar-container').innerHTML = getNavbarHTML('text-gen');
+
+  // 初始化灾害类型选择器
+  document.getElementById('cw-disaster-wrap').innerHTML = getDisasterSelector('cw-disaster', 'cw-disaster');
+  document.getElementById('em-disaster-wrap').innerHTML = getDisasterSelector('em-disaster', 'em-disaster');
+  document.getElementById('qz-disaster-wrap').innerHTML = getDisasterSelector('qz-disaster', 'qz-disaster');
+
+  // 保存原始生成内容（用于复制/导出）
+  const rawResults = { cw: '', em: '', qz: '' };
+
+  // 当前问答状态
+  let quizState = { questions: [], answers: {}, submitted: false };
+
+  // ===== Tab 切换 =====
+  document.querySelectorAll('#mainTabNav .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      // 导航按钮
+      document.querySelectorAll('#mainTabNav .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // 侧边栏面板
+      document.querySelectorAll('#sidebarConfig .tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('sidebar-' + tab).classList.add('active');
+      // 结果面板
+      document.querySelectorAll('.main-content .tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('result-' + tab).classList.add('active');
+    });
+  });
+
+  // ===== 生成记录管理 =====
+  function loadHistory() {
+    const list = Storage.get('textGenHistory', []);
+    const container = document.getElementById('historyList');
+    if (!list.length) {
+      container.innerHTML = '<p style="font-size:12px;color:var(--text-light);text-align:center;padding:8px 0">暂无记录</p>';
+      return;
+    }
+    container.innerHTML = list.map((item, i) => `
+      <div class="history-item" onclick="loadHistoryItem(${i})">
+        <div class="hi-left">
+          <span class="hi-icon">${item.icon}</span>
+          <div>
+            <div>${item.title}</div>
+            <div class="hi-time">${item.time}</div>
+          </div>
+        </div>
+        <span class="hi-del" onclick="event.stopPropagation();deleteHistoryItem(${i})">&times;</span>
+      </div>
+    `).join('');
+  }
+
+  function addHistory(title, icon, type, data) {
+    const list = Storage.get('textGenHistory', []);
+    list.unshift({ title, icon, time: formatDate(), type, data });
+    if (list.length > 30) list.length = 30;
+    Storage.set('textGenHistory', list);
+    loadHistory();
+  }
+
+  function deleteHistoryItem(index) {
+    const list = Storage.get('textGenHistory', []);
+    list.splice(index, 1);
+    Storage.set('textGenHistory', list);
+    loadHistory();
+  }
+
+  function loadHistoryItem(index) {
+    const list = Storage.get('textGenHistory', []);
+    const item = list[index];
+    if (!item) return;
+    // 切换到对应的 tab
+    const tabMap = { copywriting: 'copywriting', emergency: 'emergency', quiz: 'quiz' };
+    const tab = tabMap[item.type] || 'copywriting';
+    document.querySelector(`#mainTabNav .tab-btn[data-tab="${tab}"]`).click();
+    // 还原内容
+    if (item.type === 'copywriting') {
+      rawResults.cw = item.data.raw || '';
+      document.getElementById('cw-result').innerHTML = item.data.html || '';
+      enableResultBtns('cw');
+    } else if (item.type === 'emergency') {
+      rawResults.em = item.data.raw || '';
+      document.getElementById('em-result').innerHTML = item.data.html || '';
+      enableResultBtns('em');
+    } else if (item.type === 'quiz') {
+      quizState = item.data.quizState || { questions: [], answers: {}, submitted: false };
+      renderQuizQuestions();
+      enableResultBtns('qz');
+    }
+    showToast('已加载历史记录', 'info');
+  }
+
+  function enableResultBtns(prefix) {
+    const copyBtn = document.getElementById(prefix + '-copy-btn');
+    if (copyBtn) copyBtn.disabled = false;
+    const exportBtn = document.getElementById(prefix + '-export-btn');
+    if (exportBtn) exportBtn.disabled = false;
+    const exportMdBtn = document.getElementById(prefix + '-export-md-btn');
+    if (exportMdBtn) exportMdBtn.disabled = false;
+  }
+
+  // ===== 复制 & 导出 =====
+  function copyResult(prefix) {
+    if (rawResults[prefix]) {
+      copyToClipboard(rawResults[prefix]);
+    }
+  }
+
+  function exportResult(prefix, format) {
+    let content = rawResults[prefix];
+    if (!content) return;
+    const disaster = getCurrentDisaster(prefix);
+    const names = { cw: '防灾宣传文案', em: '应急预案', qz: '防灾知识问答' };
+    let ext = format === 'md' ? 'md' : 'txt';
+    let filename = `${disaster ? disaster.name : ''}_${names[prefix]}_${new Date().toLocaleDateString().replace(/\//g, '-')}.${ext}`;
+    downloadFile(content, filename, 'text/plain');
+  }
+
+  function getCurrentDisaster(prefix) {
+    const idMap = { cw: 'cw-disaster', em: 'em-disaster', qz: 'qz-disaster' };
+    const sel = document.getElementById(idMap[prefix]);
+    if (sel && sel.value && DISASTER_DB[sel.value]) return DISASTER_DB[sel.value];
+    return null;
+  }
+
+  // ===================================================================
+  // ================== 文案生成器 ======================================
+  // ===================================================================
+
+  function generateCopywriting() {
+    const disasterId = document.getElementById('cw-disaster').value;
+    if (!disasterId) { showToast('请选择灾害类型', 'error'); return; }
+    const disaster = DISASTER_DB[disasterId];
+    const audience = document.getElementById('cw-audience').value;
+    const style = document.getElementById('cw-style').value;
+
+    const audienceLabel = { primary: '小学生', junior: '初中生', senior: '高中生', general: '大众' }[audience];
+    const styleLabel = { science: '科普', promo: '宣传', story: '故事' }[style];
+
+    let raw = '';
+    let html = '';
+
+    if (style === 'science') {
+      raw = generateScienceCopy(disaster, audience);
+      html = markdownToHtml(raw);
+    } else if (style === 'promo') {
+      raw = generatePromoCopy(disaster, audience);
+      html = markdownToHtml(raw);
+    } else {
+      raw = generateStoryCopy(disaster, audience);
+      html = markdownToHtml(raw);
+    }
+
+    rawResults.cw = raw;
+    document.getElementById('cw-result').innerHTML = html;
+    enableResultBtns('cw');
+
+    // 保存记录
+    addHistory(
+      `${disaster.icon} ${disaster.name}文案（${styleLabel}/${audienceLabel}）`,
+      disaster.icon,
+      'copywriting',
+      { raw, html }
+    );
+    showToast('文案生成完成', 'success');
+  }
+
+  // 科普风格文案
+  function generateScienceCopy(d, audience) {
+    const lang = getLangLevel(audience);
+    let md = '';
+    md += `# ${d.icon} ${d.name}防范科普宣传文案\n\n`;
+    md += `> 面向受众：${lang.audienceText} | 风格：科普\n\n`;
+    md += `## 一、${d.name}是什么？\n\n`;
+    d.basics.forEach((b, i) => { md += `${i + 1}. ${adjustLang(b, lang)}\n`; });
+    md += `\n## 二、${d.name}是怎么产生的？\n\n`;
+    d.causes.forEach((c, i) => { md += `${i + 1}. ${adjustLang(c, lang)}\n`; });
+    md += `\n## 三、${d.name}来临前有哪些征兆？\n\n`;
+    d.signs.forEach((s, i) => { md += `- ${adjustLang(s, lang)}\n`; });
+    md += `\n## 四、如何做好防范准备？\n\n`;
+    d.preparation.forEach((p, i) => { md += `${i + 1}. ${adjustLang(p, lang)}\n`; });
+    md += `\n## 五、${d.name}发生时怎么办？\n\n`;
+    d.duringAction.forEach((a, i) => { md += `**${i + 1}.** ${adjustLang(a, lang)}\n`; });
+    md += `\n## 六、${d.name}过后注意事项\n\n`;
+    d.afterAction.forEach((a, i) => { md += `${i + 1}. ${adjustLang(a, lang)}\n`; });
+    md += `\n---\n\n`;
+    md += `> 本文由"安全守护者"平台基于知识库自动生成，仅供参考学习。\n`;
+    return md;
+  }
+
+  // 宣传风格文案
+  function generatePromoCopy(d, audience) {
+    const lang = getLangLevel(audience);
+    const titles = [
+      `${d.icon} 防范${d.name}，守护生命安全！`,
+      `${d.icon} ${d.name}无情，防范有道——安全知识宣传`,
+      `${d.icon} 学习${d.name}防灾知识，从你我做起！`
+    ];
+    const title = randomPick(titles);
+    let md = '';
+    md += `# ${title}\n\n`;
+    md += `> 安全守护者防灾宣传 | ${lang.audienceText}\n\n`;
+    md += `## 你知道吗？\n\n`;
+    md += `${adjustLang(randomPick(d.basics), lang)}\n\n`;
+    md += `## 警惕这些信号！\n\n`;
+    d.signs.slice(0, 4).forEach(s => { md += `- ${adjustLang(s, lang)}\n`; });
+    md += `\n## 防范${d.name}，请记住以下要点\n\n`;
+    md += `### 提前准备\n`;
+    d.preparation.slice(0, 4).forEach(p => { md += `- ${adjustLang(p, lang)}\n`; });
+    md += `\n### ${d.name}来临时\n`;
+    d.duringAction.slice(0, 4).forEach(a => { md += `- ${adjustLang(a, lang)}\n`; });
+    md += `\n### ${d.name}过后\n`;
+    d.afterAction.slice(0, 3).forEach(a => { md += `- ${adjustLang(a, lang)}\n`; });
+    md += `\n## 防灾小贴士\n\n`;
+    if (d.qa.length > 0) {
+      const qa = randomPick(d.qa);
+      md += `**问：${qa.q}**\n\n**答：** ${adjustLang(qa.a, lang)}\n\n`;
+    }
+    md += `---\n\n`;
+    md += `> 防灾减灾，人人有责。"安全守护者"与您共同守护美好家园！\n`;
+    return md;
+  }
+
+  // 故事风格文案
+  function generateStoryCopy(d, audience) {
+    const lang = getLangLevel(audience);
+    const names = ['小明', '小红', '小华', '小刚', '小丽', '小强'];
+    const hero = randomPick(names);
+    const locations = ['学校', '家里', '放学路上', '社区'];
+    const loc = randomPick(locations);
+
+    let md = '';
+    md += `# ${d.icon} ${hero}的${d.name}防范故事\n\n`;
+    md += `> 面向受众：${lang.audienceText} | 故事风格\n\n`;
+    md += `---\n\n`;
+
+    md += `## 故事背景\n\n`;
+    md += `有一天，${hero}正在${loc}。突然，${adjustLang(d.basics[0], lang).replace('。', '')}——没错，${d.name}来了！\n\n`;
+
+    md += `## 征兆出现\n\n`;
+    md += `其实，${d.name}来临前已经有一些征兆了：\n\n`;
+    d.signs.slice(0, 3).forEach(s => { md += `- ${adjustLang(s, lang)}\n`; });
+    md += `\n可惜${hero}当时没有注意到。同学们，你们以后一定要多留意这些信号哦！\n\n`;
+
+    md += `## 正确应对\n\n`;
+    md += `好在${hero}之前学习过${d.name}的防范知识，知道应该这样做：\n\n`;
+    d.duringAction.slice(0, 4).forEach((a, i) => {
+      md += `**第${i + 1}步：** ${adjustLang(a, lang)}\n\n`;
+    });
+
+    md += `## 事后恢复\n\n`;
+    md += `${d.name}过后，${hero}又做了这些事情：\n\n`;
+    d.afterAction.slice(0, 3).forEach(a => { md += `- ${adjustLang(a, lang)}\n`; });
+    md += `\n`;
+
+    md += `## 故事启示\n\n`;
+    md += `${hero}的经历告诉我们，了解${d.name}知识非常重要！\n\n`;
+    md += `**防范要点：**\n\n`;
+    d.preparation.slice(0, 5).forEach(p => { md += `- ${adjustLang(p, lang)}\n`; });
+    md += `\n---\n\n`;
+    md += `> 记住：学一点防灾知识，多一份安全保障！"安全守护者"陪你一起学习。\n`;
+    return md;
+  }
+
+  // 语言等级调整
+  function getLangLevel(audience) {
+    const levels = {
+      primary: { level: 1, audienceText: '小学生' },
+      junior:  { level: 2, audienceText: '初中生' },
+      senior:  { level: 3, audienceText: '高中生' },
+      general: { level: 3, audienceText: '大众' }
+    };
+    return levels[audience] || levels.general;
+  }
+
+  function adjustLang(text, lang) {
+    if (lang.level <= 1) {
+      // 小学生：简化替换
+      return text
+        .replace(/涉及|涉及范围/g, '影响到的')
+        .replace(/剧烈/g, '很厉害的')
+        .replace(/积聚/g, '聚集')
+        .replace(/次生灾害/g, '其他危险')
+        .replace(/疏散/g, '跑到安全的地方')
+        .replace(/气象部门/g, '天气预报');
+    }
+    return text;
+  }
+
+  // ===================================================================
+  // ================== 应急预案生成器 ==================================
+  // ===================================================================
+
+  function generateEmergencyPlan() {
+    const disasterId = document.getElementById('em-disaster').value;
+    if (!disasterId) { showToast('请选择灾害类型', 'error'); return; }
+    const disaster = DISASTER_DB[disasterId];
+    const scene = document.getElementById('em-scene').value;
+    const sceneLabel = { school: '学校', home: '家庭', outdoor: '户外' }[scene];
+
+    const md = buildEmergencyPlan(disaster, scene, sceneLabel);
+    rawResults.em = md;
+    document.getElementById('em-result').innerHTML = markdownToHtml(md);
+    enableResultBtns('em');
+
+    addHistory(
+      `${disaster.icon} ${disaster.name}应急预案（${sceneLabel}）`,
+      disaster.icon,
+      'emergency',
+      { raw: md, html: markdownToHtml(md) }
+    );
+    showToast('应急预案生成完成', 'success');
+  }
+
+  function buildEmergencyPlan(d, scene, sceneLabel) {
+    let md = '';
+    md += `# ${d.icon} ${sceneLabel}${d.name}应急预案\n\n`;
+    md += `> 编制单位：安全守护者 | 适用场景：${sceneLabel} | 灾害类型：${d.name}\n\n`;
+    md += `---\n\n`;
+
+    // 一、总则
+    md += `## 一、总则\n\n`;
+    md += `### 1.1 编制目的\n\n`;
+    md += `为有效防范和应对${d.name}灾害，保障${sceneLabel}人员的生命安全，最大程度减少灾害损失，特制定本预案。\n\n`;
+    md += `### 1.2 适用范围\n\n`;
+    md += `本预案适用于${sceneLabel}范围内发生的${d.name}灾害的预防、预警、应急响应和灾后恢复工作。\n\n`;
+    md += `### 1.3 灾害概述\n\n`;
+    d.basics.forEach(b => { md += `- ${b}\n`; });
+    md += `\n`;
+
+    // 二、预警信号
+    md += `## 二、预警信号\n\n`;
+    md += `### 2.1 ${d.name}预警级别\n\n`;
+    if (d.level) {
+      md += `| 级别 | 描述 |\n| --- | --- |\n`;
+      Object.entries(d.level).forEach(([k, v]) => { md += `| ${k}级 | ${v} |\n`; });
+      md += `\n`;
+    }
+    md += `### 2.2 ${d.name}前兆识别\n\n`;
+    d.signs.forEach(s => { md += `- ${s}\n`; });
+    md += `\n`;
+
+    // 三、组织机构与职责分工
+    md += `## 三、组织机构与职责分工\n\n`;
+    md += `### 3.1 应急指挥组\n\n`;
+    if (scene === 'school') {
+      md += `| 岗位 | 负责人 | 职责 |\n| --- | --- | --- |\n`;
+      md += `| 总指挥 | 校长 | 全面负责应急处置工作 |\n`;
+      md += `| 副总指挥 | 分管安全副校长 | 协助总指挥，协调各组工作 |\n`;
+      md += `| 警戒联络组 | 德育主任 | 负责警报发布、对外联络 |\n`;
+      md += `| 疏散引导组 | 各班主任 | 负责学生安全疏散 |\n`;
+      md += `| 医疗救护组 | 校医 | 负责伤员初步救治 |\n`;
+      md += `| 后勤保障组 | 总务主任 | 负责物资供应和设施检查 |\n`;
+    } else if (scene === 'home') {
+      md += `| 岗位 | 职责 |\n| --- | --- |\n`;
+      md += `| 家庭负责人 | 统一指挥、判断形势、做出决策 |\n`;
+      md += `| 成员A | 负责关断水电气、收集应急物资 |\n`;
+      md += `| 成员B | 负责照看老人和儿童 |\n`;
+      md += `| 成员C | 负责对外联络求救 |\n`;
+    } else {
+      md += `| 岗位 | 职责 |\n| --- | --- |\n`;
+      md += `| 队长 | 统一指挥户外队伍，判断安全形势 |\n`;
+      md += `| 安全员 | 监测环境变化，发出预警信号 |\n`;
+      md += `| 医疗员 | 负责急救和伤员转运 |\n`;
+      md += `| 联络员 | 负责通讯、对外求救 |\n`;
+    }
+    md += `\n`;
+
+    // 四、疏散路线
+    md += `## 四、疏散路线与集合点\n\n`;
+    if (scene === 'school') {
+      md += `### 4.1 疏散路线\n\n`;
+      md += `1. 一楼班级：直接从教室门经走廊到达操场\n`;
+      md += `2. 二楼及以上班级：沿楼梯（靠右下行）到达一楼后至操场\n`;
+      md += `3. 实验室/功能室：按最近出口疏散至操场\n\n`;
+      md += `### 4.2 集合点\n\n`;
+      md += `- 主集合点：学校操场中央\n`;
+      md += `- 备用集合点：校外空旷安全区域\n\n`;
+      md += `### 4.3 疏散要求\n\n`;
+      md += `- 不推搡、不拥挤、不逆行\n`;
+      md += `- 用书包或双手保护头部\n`;
+      md += `- 班主任最后离开教室，清点人数\n`;
+    } else if (scene === 'home') {
+      md += `### 4.1 家庭疏散路线\n\n`;
+      md += `1. 确认安全后从大门撤离，走楼梯不坐电梯\n`;
+      md += `2. 如大门受阻，从阳台呼救等待救援\n`;
+      md += `3. 熟悉楼道消防通道位置\n\n`;
+      md += `### 4.2 集合点\n\n`;
+      md += `- 事先约定的小区空地或附近公园\n`;
+      md += `- 与家人提前约定紧急联系方式和集合地点\n`;
+    } else {
+      md += `### 4.1 户外疏散原则\n\n`;
+      md += `1. 立即停止行进，观察周围环境\n`;
+      md += `2. 远离${d.name}可能影响区域（山体、河道、低洼地带）\n`;
+      md += `3. 向安全高地或开阔地带转移\n`;
+      md += `4. 保持队伍不分散，互相照应\n\n`;
+      md += `### 4.2 紧急集合点\n\n`;
+      md += `- 选择开阔、坚固、远离危险源的高地\n`;
+      md += `- 确保手机电量，保持通讯畅通\n`;
+    }
+    md += `\n`;
+
+    // 五、应急响应措施
+    md += `## 五、应急响应措施\n\n`;
+    md += `### 5.1 灾前准备\n\n`;
+    d.preparation.forEach((p, i) => { md += `${i + 1}. ${p}\n`; });
+    md += `\n### 5.2 灾中应对\n\n`;
+    d.duringAction.forEach((a, i) => { md += `${i + 1}. ${a}\n`; });
+    md += `\n### 5.3 灾后处置\n\n`;
+    d.afterAction.forEach((a, i) => { md += `${i + 1}. ${a}\n`; });
+    md += `\n`;
+
+    // 六、应急物资清单
+    md += `## 六、应急物资清单\n\n`;
+    md += `| 类别 | 物品 | 数量 | 备注 |\n| --- | --- | --- | --- |\n`;
+    md += `| 饮水 | 瓶装水 | 3天用量 | 每人每天至少3升 |\n`;
+    md += `| 食品 | 压缩饼干/能量棒 | 3天用量 | 高热量、易保存 |\n`;
+    md += `| 照明 | 手电筒+备用电池 | ${scene === 'school' ? '每教室1个' : '2个'} | LED手摇式更佳 |\n`;
+    md += `| 通讯 | 充电宝/口哨 | ${scene === 'school' ? '每组1个' : '1个'} | 口哨用于求救 |\n`;
+    md += `| 医疗 | 急救包 | ${scene === 'school' ? '每楼层1个' : '1个'} | 含绷带、消毒液、常用药 |\n`;
+    md += `| 防护 | ${d.name === '火灾' ? '防烟面罩' : '雨衣/保暖毯'} | ${scene === 'school' ? '每人1件' : '每人1件'} | 根据灾害类型配备 |\n`;
+    md += `| 工具 | 多功能刀/绳索 | 1套 | 应急使用 |\n`;
+    md += `| 证件 | 身份证件复印件 | 1套 | 装入防水袋 |\n`;
+    md += `\n`;
+
+    // 七、联系方式
+    md += `## 七、重要联系方式\n\n`;
+    md += `| 电话 | 用途 |\n| --- | --- |\n`;
+    md += `| 119 | 火警/消防救援 |\n`;
+    md += `| 110 | 报警 |\n`;
+    md += `| 120 | 医疗急救 |\n`;
+    md += `| 122 | 交通事故 |\n`;
+    md += `| 12379 | 防灾减灾热线 |\n`;
+    if (scene === 'school') {
+      md += `| 校办电话 | 学校应急联络 |\n`;
+      md += `| 辖区派出所 | 就近报警 |\n`;
+    }
+    md += `\n`;
+
+    md += `---\n\n`;
+    md += `> 本预案由"安全守护者"平台基于知识库自动生成，请根据实际情况进行调整和完善。\n`;
+    md += `> \n> 生成时间：${formatDate()}\n`;
+
+    return md;
+  }
+
+  // ===================================================================
+  // ================== 问答库生成器 ====================================
+  // ===================================================================
+
+  function generateQuiz() {
+    const disasterId = document.getElementById('qz-disaster').value;
+    if (!disasterId) { showToast('请选择灾害类型', 'error'); return; }
+    const disaster = DISASTER_DB[disasterId];
+    const count = parseInt(document.getElementById('qz-count').value);
+    const difficulty = document.getElementById('qz-difficulty').value;
+
+    const questions = buildQuizQuestions(disaster, count, difficulty);
+    quizState = { questions, answers: {}, submitted: false };
+    renderQuizQuestions();
+    enableResultBtns('qz');
+
+    // 构建导出文本
+    let rawText = `${disaster.icon} ${disaster.name}防灾知识问答\n`;
+    rawText += `难度：${{ easy: '初级', medium: '中级', hard: '高级' }[difficulty]} | 题目数量：${count}\n`;
+    rawText += '='.repeat(40) + '\n\n';
+    questions.forEach((q, i) => {
+      rawText += `${i + 1}. [${q.type === 'choice' ? '选择' : '判断'}] ${q.question}\n`;
+      if (q.type === 'choice') {
+        q.options.forEach((o, j) => { rawText += `   ${'ABCD'[j]}. ${o}\n`; });
+      } else {
+        rawText += `   A. 正确  B. 错误\n`;
+      }
+      rawText += `   答案：${q.type === 'choice' ? 'ABCD'[q.answer] : (q.answer ? 'A' : 'B')}\n\n`;
+    });
+    rawResults.qz = rawText;
+
+    // 显示答题按钮
+    document.getElementById('qz-submit-btn').style.display = '';
+    document.getElementById('qz-retry-btn').style.display = 'none';
+    document.getElementById('qz-score').style.display = 'none';
+
+    addHistory(
+      `${disaster.icon} ${disaster.name}问答（${{ easy: '初级', medium: '中级', hard: '高级' }[difficulty]}/${count}题）`,
+      disaster.icon,
+      'quiz',
+      { quizState: { questions, answers: {}, submitted: false }, raw: rawText }
+    );
+    showToast('问答生成完成，开始答题吧', 'success');
+  }
+
+  function buildQuizQuestions(disaster, count, difficulty) {
+    const questions = [];
+    const allKnowledge = [
+      ...disaster.basics.map(t => ({ text: t, source: 'basics' })),
+      ...disaster.causes.map(t => ({ text: t, source: 'causes' })),
+      ...disaster.preparation.map(t => ({ text: t, source: 'preparation' })),
+      ...disaster.duringAction.map(t => ({ text: t, source: 'duringAction' })),
+      ...disaster.afterAction.map(t => ({ text: t, source: 'afterAction' }))
+    ];
+
+    // 生成选择题：从 qa 中提取
+    const choiceFromQA = disaster.qa.map(qa => {
+      // 从答案中生成错误选项
+      const correctAnswer = qa.a;
+      const wrongOptions = generateWrongOptions(correctAnswer, allKnowledge);
+      const options = [...wrongOptions];
+      const correctIdx = randomInt(0, 3);
+      options.splice(correctIdx, 0, correctAnswer.length > 60 ? correctAnswer.substring(0, 60) + '...' : correctAnswer);
+      return {
+        type: 'choice',
+        question: qa.q,
+        options: options.map(o => o.length > 80 ? o.substring(0, 80) + '...' : o),
+        answer: correctIdx,
+        explanation: qa.a
+      };
+    });
+
+    // 生成选择题：从知识点中生成
+    const knowledgeForChoice = allKnowledge.filter(k => k.text.length > 10 && k.text.length < 60);
+    const choiceFromKnowledge = knowledgeForChoice.map(k => {
+      const correctOption = k.text;
+      const wrongOptions = generateWrongOptions(correctOption, allKnowledge);
+      const options = [...wrongOptions];
+      const correctIdx = randomInt(0, 3);
+      options.splice(correctIdx, 0, correctOption);
+      // 根据知识点来源生成题目
+      const templates = {
+        basics: [`关于${disaster.name}，以下说法正确的是？`, `${disaster.name}的基本知识中，哪项是正确的？`],
+        causes: [`${disaster.name}的成因包括以下哪项？`, `以下哪项是导致${disaster.name}的原因之一？`],
+        preparation: [`防范${disaster.name}应做好以下哪项准备？`, `在${disaster.name}来临前，以下哪项准备措施是正确的？`],
+        duringAction: [`${disaster.name}发生时，以下哪种做法是正确的？`, `遇到${disaster.name}时应该怎么做？`],
+        afterAction: [`${disaster.name}过后，以下哪项做法是正确的？`, `${disaster.name}结束后的注意事项包括？`]
+      };
+      const tpl = randomPick(templates[k.source] || templates.basics);
+      return {
+        type: 'choice',
+        question: tpl,
+        options: options.map(o => o.length > 80 ? o.substring(0, 80) + '...' : o),
+        answer: correctIdx,
+        explanation: `正确答案：${correctOption}`
+      };
+    });
+
+    // 生成判断题
+    const trueFalseFromKnowledge = allKnowledge.filter(k => k.text.length > 8 && k.text.length < 80).map(k => {
+      // 随机生成正确或错误判断题
+      const isTrueVersion = Math.random() > 0.4;
+      let question, answer;
+      if (isTrueVersion) {
+        question = `判断：${k.text}`;
+        answer = true;
+      } else {
+        // 修改部分内容生成错误描述
+        question = `判断：${distortStatement(k.text, disaster)}`;
+        answer = false;
+      }
+      return {
+        type: 'truefalse',
+        question,
+        answer,
+        explanation: isTrueVersion ? `正确。${k.text}` : `此说法有误。正确知识：${k.text}`
+      };
+    });
+
+    // 根据难度选择题目
+    let pool = [];
+    const choiceCount = Math.ceil(count * 0.6);
+    const tfCount = count - choiceCount;
+
+    // 从 QA 选择题中随机选
+    pool.push(...randomPick(choiceFromQA, Math.min(choiceFromQA.length, choiceCount)));
+    // 从知识点选择题中补充
+    if (pool.length < choiceCount) {
+      const need = choiceCount - pool.length;
+      pool.push(...randomPick(choiceFromKnowledge, Math.min(choiceFromKnowledge.length, need)));
+    }
+    // 判断题
+    const tfPool = randomPick(trueFalseFromKnowledge, Math.min(trueFalseFromKnowledge.length, tfCount));
+
+    // 如果数量不够，从其他灾害中补充
+    let allQ = [...pool, ...tfPool];
+    if (allQ.length < count) {
+      const otherDisasters = DISASTER_TYPES.filter(dd => dd.id !== disaster.id);
+      otherDisasters.forEach(od => {
+        if (allQ.length >= count) return;
+        od.basics.forEach(b => {
+          if (allQ.length < count) {
+            allQ.push({
+              type: 'truefalse',
+              question: `判断：${b}`,
+              answer: true,
+              explanation: `正确。${b}`
+            });
+          }
+        });
+      });
+    }
+
+    // 打乱顺序并截取
+    allQ.sort(() => Math.random() - 0.5);
+    return allQ.slice(0, count);
+  }
+
+  // 生成错误选项
+  function generateWrongOptions(correct, knowledge) {
+    // 从其他知识中随机选3个作为干扰项
+    const others = knowledge
+      .map(k => k.text)
+      .filter(t => t !== correct && t.length > 5 && t.length < 80)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+
+    // 如果不足3个，生成通用错误选项
+    const fallbacks = [
+      '不需要特别关注，按正常生活即可',
+      '应立即前往地下室躲避',
+      '尽量收集贵重物品后撤离',
+      '大声呼喊引起注意'
+    ];
+    while (others.length < 3) {
+      const fb = fallbacks[others.length] || '以上都不对';
+      others.push(fb);
+    }
+    return others.slice(0, 3);
+  }
+
+  // 扭曲陈述（生成错误判断题）
+  function distortStatement(text, disaster) {
+    const distortions = [
+      text.replace(/可以/g, '不可以').replace(/应该/g, '不应该'),
+      text.replace(/不要/g, '可以').replace(/不能/g, '也能'),
+      text.replace(/必须/g, '不需要').replace(/一定/g, '不必要'),
+    ];
+    const result = distortions.find(d => d !== text);
+    return result || text.replace(/。$/, '的说法是错误的。');
+  }
+
+  // 渲染问答题目
+  function renderQuizQuestions() {
+    const container = document.getElementById('qz-result');
+    const qs = quizState.questions;
+    if (!qs.length) {
+      container.innerHTML = '<div class="result-empty"><p>暂无题目</p></div>';
+      return;
+    }
+
+    container.innerHTML = qs.map((q, i) => {
+      if (q.type === 'choice') {
+        return `
+          <div class="quiz-question" id="qq-${i}">
+            <div class="q-header">
+              <span class="q-number">${i + 1}</span>
+              <span class="q-type q-type-choice">选择题</span>
+            </div>
+            <div class="q-text">${q.question}</div>
+            <div class="quiz-options">
+              ${q.options.map((o, j) => `
+                <label class="quiz-option ${quizState.answers[i] === j ? 'selected' : ''} ${quizState.submitted ? (j === q.answer ? 'correct' : (quizState.answers[i] === j ? 'wrong' : '')) : ''}" onclick="selectAnswer(${i}, ${j})">
+                  <input type="radio" name="q${i}" value="${j}" ${quizState.answers[i] === j ? 'checked' : ''}>
+                  <span class="radio-dot"></span>
+                  <span>${'ABCD'[j]}. ${o}</span>
+                </label>
+              `).join('')}
+            </div>
+            ${quizState.submitted ? `<div style="margin-top:8px;font-size:12px;color:var(--text-secondary)">${q.explanation}</div>` : ''}
+          </div>
+        `;
+      } else {
+        return `
+          <div class="quiz-question" id="qq-${i}">
+            <div class="q-header">
+              <span class="q-number">${i + 1}</span>
+              <span class="q-type q-type-truefalse">判断题</span>
+            </div>
+            <div class="q-text">${q.question}</div>
+            <div class="quiz-tf-options">
+              <button class="quiz-tf-btn ${quizState.answers[i] === true ? 'selected' : ''} ${quizState.submitted ? (q.answer === true ? 'correct' : (quizState.answers[i] === true ? 'wrong' : '')) : ''}" onclick="selectAnswer(${i}, true)">正确</button>
+              <button class="quiz-tf-btn ${quizState.answers[i] === false ? 'selected' : ''} ${quizState.submitted ? (q.answer === false ? 'correct' : (quizState.answers[i] === false ? 'wrong' : '')) : ''}" onclick="selectAnswer(${i}, false)">错误</button>
+            </div>
+            ${quizState.submitted ? `<div style="margin-top:8px;font-size:12px;color:var(--text-secondary)">${q.explanation}</div>` : ''}
+          </div>
+        `;
+      }
+    }).join('');
+  }
+
+  function selectAnswer(qIndex, value) {
+    if (quizState.submitted) return;
+    quizState.answers[qIndex] = value;
+    renderQuizQuestions();
+  }
+
+  function submitQuiz() {
+    const qs = quizState.questions;
+    const unanswered = qs.filter((_, i) => quizState.answers[i] === undefined);
+    if (unanswered.length > 0) {
+      showToast(`还有 ${unanswered.length} 题未作答`, 'warning');
+      return;
+    }
+
+    quizState.submitted = true;
+    renderQuizQuestions();
+
+    // 计算分数
+    let correct = 0;
+    qs.forEach((q, i) => {
+      if (q.type === 'choice') {
+        if (quizState.answers[i] === q.answer) correct++;
+      } else {
+        if (quizState.answers[i] === q.answer) correct++;
+      }
+    });
+    const total = qs.length;
+    const score = Math.round((correct / total) * 100);
+
+    // 显示评分
+    const scoreEl = document.getElementById('qz-score');
+    const levelClass = score >= 90 ? 'excellent' : score >= 70 ? 'good' : score >= 50 ? 'fair' : 'poor';
+    const levelText = score >= 90 ? '优秀' : score >= 70 ? '良好' : score >= 50 ? '及格' : '需要加油';
+    scoreEl.innerHTML = `
+      <div class="score-box score-${levelClass}">
+        <div class="score-num">${score}</div>
+        <div class="score-label">${levelText} — 答对 ${correct}/${total} 题</div>
+      </div>
+    `;
+    scoreEl.style.display = '';
+
+    document.getElementById('qz-submit-btn').style.display = 'none';
+    document.getElementById('qz-retry-btn').style.display = '';
+
+    showToast(`答题完成！得分：${score}分`, score >= 60 ? 'success' : 'error');
+  }
+
+  function retryQuiz() {
+    quizState.answers = {};
+    quizState.submitted = false;
+    document.getElementById('qz-score').style.display = 'none';
+    document.getElementById('qz-submit-btn').style.display = '';
+    document.getElementById('qz-retry-btn').style.display = 'none';
+    renderQuizQuestions();
+  }
+
+  // ===================================================================
+  // ================== 简易 Markdown 渲染 =============================
+  // ===================================================================
+
+  function markdownToHtml(md) {
+    if (!md) return '';
+    let html = md;
+
+    // 转义 HTML 特殊字符（保留我们需要的标签）
+    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 还原表格中的 | （因为我们需要它）
+    // 表格处理
+    html = html.replace(/^(\|.+\|)\n(\|[\s\-:|]+\|)\n((?:\|.+\|\n?)*)/gm, function(match, header, sep, body) {
+      const headers = header.split('|').filter(c => c.trim());
+      const rows = body.trim().split('\n').map(row => row.split('|').filter(c => c.trim()));
+      let table = '<table><thead><tr>';
+      headers.forEach(h => { table += `<th>${h.trim()}</th>`; });
+      table += '</tr></thead><tbody>';
+      rows.forEach(row => {
+        table += '<tr>';
+        row.forEach(cell => { table += `<td>${cell.trim()}</td>`; });
+        table += '</tr>';
+      });
+      table += '</tbody></table>';
+      return table;
+    });
+
+    // 标题
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // 引用
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // 加粗
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // 斜体
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // 无序列表
+    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+    // 有序列表
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+    // 水平线
+    html = html.replace(/^---$/gm, '<hr>');
+
+    // 段落（连续非空行）
+    html = html.replace(/\n{2,}/g, '</p><p>');
+    html = '<p>' + html + '</p>';
+
+    // 清理空段落
+    html = html.replace(/<p>\s*<\/p>/g, '');
+    html = html.replace(/<p>\s*(<h[123]>)/g, '$1');
+    html = html.replace(/(<\/h[123]>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<ul>)/g, '$1');
+    html = html.replace(/(<\/ul>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<table>)/g, '$1');
+    html = html.replace(/(<\/table>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<hr>)/g, '$1');
+    html = html.replace(/(<hr>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<blockquote>)/g, '$1');
+    html = html.replace(/(<\/blockquote>)\s*<\/p>/g, '$1');
+
+    return html;
+  }
+
+  // ===== 初始化加载记录 =====
+  loadHistory();
+  </script>
+</body>
+</html>

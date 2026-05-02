@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数字孪生模拟 - 安全守护者</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <style>
+    .workspace { display: grid; grid-template-columns: 220px 1fr 260px; gap: 16px; min-height: calc(100vh - 110px); }
+    .side-panel { background: var(--card); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow); height: fit-content; position: sticky; top: 76px; }
+    .main-area { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+    .tab-bar { display: flex; border-bottom: 2px solid var(--border); }
+    .tab-bar button { flex:1; padding: 12px 8px; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: var(--transition); }
+    .tab-bar button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; background: var(--primary-light); }
+    .canvas-container { position: relative; background: #1a1a2e; }
+    canvas#sceneCanvas { display: block; width: 100%; cursor: crosshair; }
+    .hud { position: absolute; top: 8px; left: 8px; color: white; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
+    .hud div { margin-bottom: 4px; padding: 3px 8px; background: rgba(0,0,0,0.4); border-radius: 4px; display: inline-block; margin-right: 4px; }
+    .panel-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .element-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .element-item { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); cursor: grab; font-size: 13px; transition: var(--transition); }
+    .element-item:hover { border-color: var(--primary); background: var(--primary-light); }
+    .element-item .el-icon { font-size: 20px; }
+    .disaster-select { display: flex; flex-direction: column; gap: 4px; }
+    .disaster-btn { padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: white; cursor: pointer; font-size: 12px; text-align: left; transition: var(--transition); display: flex; align-items: center; gap: 6px; }
+    .disaster-btn:hover { border-color: var(--warning); }
+    .disaster-btn.active { border-color: var(--danger); background: #FFF3E0; }
+    .info-card { background: #F5F5F5; border-radius: var(--radius); padding: 12px; font-size: 12px; line-height: 1.6; margin-top: 12px; }
+    .info-card h4 { font-size: 13px; margin-bottom: 6px; color: var(--primary); }
+    .escape-status { text-align: center; padding: 16px; }
+    .escape-status .timer { font-size: 36px; font-weight: 700; font-family: monospace; }
+    .escape-status .timer.warning { color: var(--danger); }
+    .escape-status .timer.success { color: var(--success); }
+    .escape-status .label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+    .timeline-wrap { margin-top: 12px; }
+    .timeline-wrap label { font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+    .timeline-wrap input[type="range"] { width: 100%; }
+    .compare-split { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #333; }
+    .compare-split canvas { display: block; width: 100%; }
+    .compare-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; pointer-events: none; }
+    .score-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 30px 40px; border-radius: var(--radius-lg); text-align: center; z-index: 10; }
+    .score-popup h2 { font-size: 28px; margin-bottom: 8px; }
+    .score-popup p { font-size: 14px; opacity: 0.9; }
+    @media(max-width:1024px){.workspace{grid-template-columns:1fr;}.side-panel{position:static;}}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="logo">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="white" stroke-width="2"/><path d="M14 6v8l5 3" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M9 18l3-2 3 2 3-2" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      安全守护者
+    </a>
+    <div class="nav-links">
+      <a href="../index.html">首页</a>
+      <a href="text-gen.html">文本生成</a>
+      <a href="media-gen.html">图像/视频</a>
+      <a href="voice-interact.html">语音交互</a>
+      <a href="digital-twin.html" class="active">数字孪生</a>
+    </div>
+  </nav>
+
+  <div class="container-wide">
+    <div class="tab-bar" id="mainTab">
+      <button class="active" onclick="switchTab('editor')">🏗️ 场景搭建</button>
+      <button onclick="switchTab('escape')">🏃 逃生模拟</button>
+      <button onclick="switchTab('evolution')">📈 灾害演变</button>
+    </div>
+
+    <!-- Tab 1: Scene Editor -->
+    <div class="workspace" id="tab-editor">
+      <div class="side-panel">
+        <div class="panel-title">场景元素</div>
+        <div class="element-list" id="elementList">
+          <div class="element-item" draggable="true" data-type="building"><span class="el-icon">🏠</span>建筑</div>
+          <div class="element-item" draggable="true" data-type="tree"><span class="el-icon">🌳</span>树木</div>
+          <div class="element-item" draggable="true" data-type="road"><span class="el-icon">🛤️</span>道路</div>
+          <div class="element-item" draggable="true" data-type="person"><span class="el-icon">👤</span>人员</div>
+          <div class="element-item" draggable="true" data-type="water"><span class="el-icon">💧</span>水域</div>
+          <div class="element-item" draggable="true" data-type="vehicle"><span class="el-icon">🚗</span>车辆</div>
+        </div>
+        <div class="panel-title">叠加灾害效果</div>
+        <div class="disaster-select" id="disasterEffects">
+          <button class="disaster-btn" onclick="toggleEffect('earthquake')">🌍 地震裂缝</button>
+          <button class="disaster-btn" onclick="toggleEffect('flood')">🌊 洪水淹没</button>
+          <button class="disaster-btn" onclick="toggleEffect('fire')">🔥 火焰效果</button>
+          <button class="disaster-btn" onclick="toggleEffect('wind')">🌀 强风效果</button>
+        </div>
+        <button class="btn btn-sm btn-outline" style="width:100%;margin-top:12px;" onclick="clearScene()">清空场景</button>
+      </div>
+
+      <div class="main-area">
+        <div class="canvas-container" id="editorContainer">
+          <canvas id="sceneCanvas" width="800" height="500"></canvas>
+          <div class="hud"><div id="hudInfo">点击画布放置元素 | 右键删除</div></div>
+        </div>
+      </div>
+
+      <div class="side-panel" id="knowledgePanel">
+        <div class="panel-title">知识提示</div>
+        <div class="info-card" id="tipCard">
+          <h4>操作说明</h4>
+          <p>1. 选择左侧元素类型<br>2. 点击画布放置<br>3. 可拖拽移动已放置元素<br>4. 选择灾害效果叠加<br>5. 右键点击元素可删除</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Escape Simulation -->
+    <div class="workspace" id="tab-escape" style="display:none;">
+      <div class="side-panel">
+        <div class="panel-title">选择场景</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="startEscape('school')">🏫 学校教室</button>
+          <button class="btn btn-outline btn-sm" onclick="startEscape('home')">🏠 家庭住宅</button>
+          <button class="btn btn-outline btn-sm" onclick="startEscape('outdoor')">🏔️ 户外山地</button>
+        </div>
+        <div class="panel-title" style="margin-top:16px;">选择灾害</div>
+        <select class="form-control" id="escapeDisaster" onchange="updateEscapeTips()">
+          <option value="earthquake">🌍 地震</option>
+          <option value="fire">🔥 火灾</option>
+          <option value="flood">🌊 洪水</option>
+        </select>
+        <button class="btn btn-warning btn-sm" style="width:100%;margin-top:12px;" onclick="triggerDisaster()">触发灾害</button>
+        <div class="info-card" id="escapeTips">
+          <h4>操作说明</h4>
+          <p>选择场景后，点击"触发灾害"开始模拟。在限定时间内点击画布引导角色（蓝色圆点）到达绿色安全出口。</p>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div class="canvas-container" id="escapeContainer" style="position:relative;">
+          <canvas id="escapeCanvas" width="800" height="500"></canvas>
+          <div class="hud">
+            <div id="escapeHud">选择场景开始逃生演练</div>
+          </div>
+          <div class="score-popup" id="scorePopup" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-title">演练状态</div>
+        <div class="escape-status">
+          <div class="timer" id="escapeTimer">--</div>
+          <div class="label" id="escapeStatus">等待开始</div>
+        </div>
+        <div class="info-card" id="escapeKnowledge">
+          <h4>逃生要点</h4>
+          <p>请先选择场景和灾害类型</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Disaster Evolution -->
+    <div class="workspace" id="tab-evolution" style="display:none;">
+      <div class="side-panel">
+        <div class="panel-title">灾害类型</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="setEvolution('earthquake')">🌍 地震</button>
+          <button class="btn btn-outline btn-sm" onclick="setEvolution('flood')">🌊 洪水</button>
+          <button class="btn btn-outline btn-sm" onclick="setEvolution('typhoon')">🌀 台风</button>
+        </div>
+        <div class="timeline-wrap">
+          <label>时间进度: <span id="evoProgress">0%</span></label>
+          <input type="range" id="evoSlider" min="0" max="100" value="0" oninput="drawEvolution()">
+        </div>
+        <div class="timeline-wrap">
+          <label>灾害强度: <span id="evoIntensity">中等</span></label>
+          <input type="range" id="evoIntensitySlider" min="1" max="3" value="2" oninput="updateIntensity()">
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="playEvolution()">▶ 自动播放</button>
+      </div>
+
+      <div class="main-area">
+        <div class="canvas-container">
+          <div class="compare-split" id="evoSplit">
+            <div style="position:relative;">
+              <canvas id="evoCanvasNoPrep" width="400" height="500"></canvas>
+              <div class="compare-label">无防范措施</div>
+            </div>
+            <div style="position:relative;">
+              <canvas id="evoCanvasPrep" width="400" height="500"></canvas>
+              <div class="compare-label">有防范措施</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-title">演变说明</div>
+        <div class="info-card" id="evoInfo">
+          <h4>当前阶段</h4>
+          <p>拖动时间轴查看灾害从发生到结束的全过程。左侧为无防范情况，右侧为有防范措施情况。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script>
+    // ===== Tab Switching =====
+    function switchTab(tab) {
+      ['editor','escape','evolution'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none';
+      });
+      document.querySelectorAll('#mainTab button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // ========================================
+    // Tab 1: Scene Editor
+    // ========================================
+    const editorCanvas = document.getElementById('sceneCanvas');
+    const ectx = editorCanvas.getContext('2d');
+    let selectedElement = 'building';
+    let placedElements = [];
+    let activeEffects = new Set();
+    let draggingEl = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    // Element selection
+    document.querySelectorAll('.element-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.element-item').forEach(i => i.style.borderColor = '');
+        item.style.borderColor = 'var(--primary)';
+        selectedElement = item.dataset.type;
+      });
+    });
+
+    // Canvas click to place
+    editorCanvas.addEventListener('click', (e) => {
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      // Check if clicking on existing element
+      const clicked = placedElements.find(el => Math.abs(el.x - x) < 25 && Math.abs(el.y - y) < 25);
+      if (clicked && !draggingEl) {
+        draggingEl = clicked;
+        dragOffset = { x: x - clicked.x, y: y - clicked.y };
+        return;
+      }
+
+      // Place new element
+      const shapes = {
+        building: { color: '#78909C', w: 40, h: 50, icon: '🏠' },
+        tree: { color: '#4CAF50', w: 25, h: 25, icon: '🌳' },
+        road: { color: '#616161', w: 60, h: 12, icon: '' },
+        person: { color: '#2196F3', w: 12, h: 12, icon: '' },
+        water: { color: 'rgba(33,150,243,0.5)', w: 50, h: 30, icon: '' },
+        vehicle: { color: '#F44336', w: 30, h: 18, icon: '' }
+      };
+      const s = shapes[selectedElement];
+      if (s) {
+        placedElements.push({ type: selectedElement, x, y, ...s });
+        drawEditorScene();
+      }
+    });
+
+    editorCanvas.addEventListener('mousemove', (e) => {
+      if (!draggingEl) return;
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      draggingEl.x = (e.clientX - rect.left) * scaleX - dragOffset.x;
+      draggingEl.y = (e.clientY - rect.top) * scaleY - dragOffset.y;
+      drawEditorScene();
+    });
+
+    editorCanvas.addEventListener('mouseup', () => { draggingEl = null; });
+    editorCanvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      const idx = placedElements.findIndex(el => Math.abs(el.x - x) < 25 && Math.abs(el.y - y) < 25);
+      if (idx >= 0) { placedElements.splice(idx, 1); drawEditorScene(); }
+    });
+
+    function toggleEffect(type) {
+      if (activeEffects.has(type)) activeEffects.delete(type);
+      else activeEffects.add(type);
+      document.querySelectorAll('.disaster-btn').forEach(b => b.classList.remove('active'));
+      activeEffects.forEach(t => {
+        document.querySelectorAll('.disaster-btn').forEach(b => {
+          if (b.textContent.includes({ earthquake: '地震', flood: '洪水', fire: '火焰', wind: '强风' }[t])) b.classList.add('active');
+        });
+      });
+      drawEditorScene();
+    }
+
+    function clearScene() { placedElements = []; activeEffects.clear(); drawEditorScene(); }
+
+    function drawEditorScene() {
+      ectx.clearRect(0, 0, 800, 500);
+      // Background grid
+      ectx.fillStyle = '#2D3436'; ectx.fillRect(0, 0, 800, 500);
+      ectx.strokeStyle = 'rgba(255,255,255,0.05)'; ectx.lineWidth = 1;
+      for (let x = 0; x < 800; x += 40) { ectx.beginPath(); ectx.moveTo(x, 0); ectx.lineTo(x, 500); ectx.stroke(); }
+      for (let y = 0; y < 500; y += 40) { ectx.beginPath(); ectx.moveTo(0, y); ectx.lineTo(800, y); ectx.stroke(); }
+
+      // Draw elements
+      placedElements.forEach(el => {
+        if (el.type === 'building') {
+          ectx.fillStyle = el.color; ectx.fillRect(el.x - el.w/2, el.y - el.h, el.w, el.h);
+          ectx.fillStyle = '#FFF9C4'; for (let wy = el.y - el.h + 8; wy < el.y - 5; wy += 14) for (let wx = el.x - el.w/2 + 6; wx < el.x + el.w/2 - 6; wx += 12) ectx.fillRect(wx, wy, 6, 8);
+        } else if (el.type === 'tree') {
+          ectx.fillStyle = '#5D4037'; ectx.fillRect(el.x - 3, el.y - 5, 6, 15);
+          ectx.fillStyle = '#388E3C'; ectx.beginPath(); ectx.arc(el.x, el.y - 15, 14, 0, Math.PI * 2); ectx.fill();
+        } else if (el.type === 'road') {
+          ectx.fillStyle = el.color; ectx.fillRect(el.x - el.w/2, el.y - el.h/2, el.w, el.h);
+          ectx.strokeStyle = '#FFF'; ectx.lineWidth = 1; ectx.setLineDash([6, 6]);
+          ectx.beginPath(); ectx.moveTo(el.x - el.w/2, el.y); ectx.lineTo(el.x + el.w/2, el.y); ectx.stroke();
+          ectx.setLineDash([]);
+        } else if (el.type === 'person') {
+          ectx.fillStyle = '#2196F3'; ectx.beginPath(); ectx.arc(el.x, el.y - 8, 5, 0, Math.PI * 2); ectx.fill();
+          ectx.fillRect(el.x - 3, el.y - 3, 6, 12);
+        } else if (el.type === 'water') {
+          ectx.fillStyle = el.color; ectx.fillRect(el.x - el.w/2, el.y - el.h/2, el.w, el.h);
+        } else if (el.type === 'vehicle') {
+          ectx.fillStyle = el.color; ectx.fillRect(el.x - 15, el.y - 9, 30, 18);
+          ectx.fillStyle = '#B3E5FC'; ectx.fillRect(el.x - 10, el.y - 7, 8, 6); ectx.fillRect(el.x + 4, el.y - 7, 8, 6);
+        }
+      });
+
+      // Draw effects
+      const t = Date.now() / 1000;
+      if (activeEffects.has('earthquake')) {
+        ectx.strokeStyle = '#8D6E63'; ectx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+          ectx.beginPath();
+          const sx = 100 + i * 150;
+          ectx.moveTo(sx, 480); ectx.lineTo(sx + 20, 470); ectx.lineTo(sx + 10, 460); ectx.lineTo(sx + 35, 450);
+          ectx.stroke();
+        }
+      }
+      if (activeEffects.has('flood')) {
+        ectx.fillStyle = 'rgba(33,150,243,0.3)';
+        ectx.beginPath(); ectx.moveTo(0, 400);
+        for (let x = 0; x <= 800; x += 10) ectx.lineTo(x, 400 + Math.sin(x * 0.03 + t * 2) * 5);
+        ectx.lineTo(800, 500); ectx.lineTo(0, 500); ectx.closePath(); ectx.fill();
+      }
+      if (activeEffects.has('fire')) {
+        for (let i = 0; i < 30; i++) {
+          ectx.fillStyle = ['#FF5722', '#FF9800', '#FFC107'][i % 3];
+          ectx.globalAlpha = 0.4 + Math.random() * 0.3;
+          ectx.beginPath(); ectx.arc(50 + Math.random() * 700, 430 + Math.random() * 30 - Math.random() * 30, 3 + Math.random() * 6, 0, Math.PI * 2); ectx.fill();
+        }
+        ectx.globalAlpha = 1;
+      }
+      if (activeEffects.has('wind')) {
+        ectx.strokeStyle = 'rgba(255,255,255,0.2)'; ectx.lineWidth = 1;
+        for (let i = 0; i < 20; i++) {
+          const sx = Math.random() * 800, sy = Math.random() * 500;
+          ectx.beginPath(); ectx.moveTo(sx, sy); ectx.lineTo(sx + 30 + Math.random() * 20, sy + (Math.random() - 0.5) * 10); ectx.stroke();
+        }
+      }
+    }
+    drawEditorScene();
+
+    // ========================================
+    // Tab 2: Escape Simulation
+    // ========================================
+    const escapeCanvas = document.getElementById('escapeCanvas');
+    const esctx = escapeCanvas.getContext('2d');
+    let escapeState = { scene: null, disaster: 'earthquake', player: { x: 0, y: 0 }, exits: [], obstacles: [], active: false, timeLeft: 30, timerInterval: null, path: [] };
+
+    const ESCAPE_SCENES = {
+      school: {
+        name: '学校教室',
+        walls: [{ x: 50, y: 50, w: 700, h: 400 }], // outer boundary
+        rooms: [
+          { x: 50, y: 50, w: 200, h: 150, label: '教室A' },
+          { x: 300, y: 50, w: 200, h: 150, label: '教室B' },
+          { x: 550, y: 50, w: 200, h: 150, label: '走廊' },
+          { x: 50, y: 250, w: 200, h: 200, label: '教室C' },
+          { x: 300, y: 250, w: 200, h: 200, label: '实验室' },
+          { x: 550, y: 250, w: 200, h: 200, label: '操场' }
+        ],
+        doors: [{ x: 250, y: 100, w: 50, h: 10 }, { x: 250, y: 300, w: 50, h: 10 }, { x: 500, y: 100, w: 10, h: 50 }, { x: 500, y: 300, w: 10, h: 50 }],
+        exits: [{ x: 730, y: 350, w: 20, h: 40 }],
+        start: { x: 100, y: 120 },
+        obstacles: [{ x: 300, y: 150, w: 80, h: 30 }, { x: 600, y: 350, w: 60, h: 40 }]
+      },
+      home: {
+        name: '家庭住宅',
+        walls: [{ x: 80, y: 80, w: 640, h: 360 }],
+        rooms: [
+          { x: 80, y: 80, w: 250, h: 200, label: '客厅' },
+          { x: 330, y: 80, w: 200, h: 200, label: '卧室' },
+          { x: 530, y: 80, w: 190, h: 200, label: '厨房' },
+          { x: 80, y: 280, w: 300, h: 160, label: '卫生间' },
+          { x: 380, y: 280, w: 340, h: 160, label: '阳台' }
+        ],
+        doors: [{ x: 280, y: 200, w: 50, h: 10 }, { x: 480, y: 200, w: 10, h: 50 }, { x: 330, y: 340, w: 50, h: 10 }],
+        exits: [{ x: 700, y: 350, w: 20, h: 40 }],
+        start: { x: 200, y: 150 },
+        obstacles: [{ x: 150, y: 130, w: 60, h: 40 }, { x: 400, y: 150, w: 40, h: 30 }]
+      },
+      outdoor: {
+        name: '户外山地',
+        walls: [],
+        rooms: [],
+        doors: [],
+        exits: [{ x: 700, y: 50, w: 40, h: 30 }],
+        start: { x: 100, y: 400 },
+        obstacles: [
+          { x: 200, y: 100, w: 150, h: 80, type: 'mountain' },
+          { x: 400, y: 200, w: 120, h: 100, type: 'mountain' },
+          { x: 150, y: 300, w: 100, h: 60, type: 'rock' },
+          { x: 500, y: 350, w: 80, h: 50, type: 'rock' },
+          { x: 300, y: 400, w: 60, h: 40, type: 'tree' }
+        ]
+      }
+    };
+
+    function startEscape(sceneId) {
+      const scene = ESCAPE_SCENES[sceneId];
+      escapeState.scene = scene;
+      escapeState.player = { ...scene.start };
+      escapeState.active = false;
+      escapeState.timeLeft = 30;
+      escapeState.path = [{ ...scene.start }];
+      if (escapeState.timerInterval) clearInterval(escapeState.timerInterval);
+      document.getElementById('scorePopup').style.display = 'none';
+      document.getElementById('escapeTimer').textContent = '30';
+      document.getElementById('escapeTimer').className = 'timer';
+      document.getElementById('escapeStatus').textContent = '就绪 - 点击"触发灾害"开始';
+      document.querySelectorAll('#tab-escape .side-panel:first-child .btn-sm').forEach(b => b.className = 'btn btn-outline btn-sm');
+      event.target.className = 'btn btn-primary btn-sm';
+      drawEscapeScene();
+    }
+
+    function triggerDisaster() {
+      if (!escapeState.scene) { showToast('请先选择场景', 'error'); return; }
+      if (escapeState.active) return;
+      escapeState.active = true;
+      escapeState.timeLeft = 30;
+      document.getElementById('escapeStatus').textContent = '灾害发生！快速逃生！';
+      document.getElementById('escapeTimer').className = 'timer warning';
+      escapeState.timerInterval = setInterval(() => {
+        escapeState.timeLeft--;
+        document.getElementById('escapeTimer').textContent = escapeState.timeLeft;
+        if (escapeState.timeLeft <= 10) document.getElementById('escapeTimer').className = 'timer warning';
+        if (escapeState.timeLeft <= 0) {
+          clearInterval(escapeState.timerInterval);
+          escapeState.active = false;
+          showEscapeResult(false);
+        }
+      }, 1000);
+      drawEscapeScene();
+      showToast('灾害已触发！点击画布引导角色到达绿色出口', 'warning');
+    }
+
+    escapeCanvas.addEventListener('click', (e) => {
+      if (!escapeState.active || !escapeState.scene) return;
+      const rect = escapeCanvas.getBoundingClientRect();
+      const scaleX = escapeCanvas.width / rect.width;
+      const scaleY = escapeCanvas.height / rect.height;
+      const tx = (e.clientX - rect.left) * scaleX;
+      const ty = (e.clientY - rect.top) * scaleY;
+
+      // Move player toward target
+      const dx = tx - escapeState.player.x;
+      const dy = ty - escapeState.player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const steps = Math.ceil(dist / 5);
+      let step = 0;
+
+      function moveStep() {
+        if (step >= steps || !escapeState.active) {
+          // Check if reached exit
+          const exit = escapeState.scene.exits[0];
+          if (exit && Math.abs(escapeState.player.x - (exit.x + exit.w/2)) < 25 && Math.abs(escapeState.player.y - (exit.y + exit.h/2)) < 25) {
+            escapeState.active = false;
+            clearInterval(escapeState.timerInterval);
+            showEscapeResult(true);
+          }
+          return;
+        }
+        const nx = escapeState.player.x + dx / steps;
+        const ny = escapeState.player.y + dy / steps;
+
+        // Obstacle collision check
+        const blocked = (escapeState.scene.obstacles || []).some(o =>
+          nx > o.x && nx < o.x + o.w && ny > o.y && ny < o.y + o.h
+        );
+        if (!blocked) {
+          escapeState.player.x = nx;
+          escapeState.player.y = ny;
+          escapeState.path.push({ x: nx, y: ny });
+        }
+        step++;
+        drawEscapeScene();
+        requestAnimationFrame(moveStep);
+      }
+      moveStep();
+    });
+
+    function showEscapeResult(success) {
+      const popup = document.getElementById('scorePopup');
+      popup.style.display = '';
+      if (success) {
+        const timeTaken = 30 - escapeState.timeLeft;
+        const score = Math.max(0, 100 - timeTaken * 3);
+        popup.innerHTML = `<h2 style="color:#4CAF50">逃生成功！</h2><p>用时: ${timeTaken}秒 | 评分: ${score}分</p><p style="margin-top:12px"><button class="btn btn-primary" onclick="document.getElementById('scorePopup').style.display='none'">确定</button></p>`;
+        document.getElementById('escapeTimer').className = 'timer success';
+      } else {
+        popup.innerHTML = `<h2 style="color:#F44336">时间到！</h2><p>未能及时到达安全出口</p><p style="margin-top:12px"><button class="btn btn-primary" onclick="document.getElementById('scorePopup').style.display='none'">重试</button></p>`;
+      }
+    }
+
+    function drawEscapeScene() {
+      esctx.clearRect(0, 0, 800, 500);
+      if (!escapeState.scene) {
+        esctx.fillStyle = '#2D3436'; esctx.fillRect(0, 0, 800, 500);
+        esctx.fillStyle = '#999'; esctx.font = '16px sans-serif'; esctx.textAlign = 'center';
+        esctx.fillText('请选择场景开始逃生演练', 400, 250);
+        esctx.textAlign = 'left'; return;
+      }
+      const scene = escapeState.scene;
+
+      // Background
+      if (scene.name === '户外山地') {
+        const grad = esctx.createLinearGradient(0, 0, 0, 500);
+        grad.addColorStop(0, '#87CEEB'); grad.addColorStop(0.6, '#81C784'); grad.addColorStop(1, '#4CAF50');
+        esctx.fillStyle = grad; esctx.fillRect(0, 0, 800, 500);
+      } else {
+        esctx.fillStyle = '#ECEFF1'; esctx.fillRect(0, 0, 800, 500);
+      }
+
+      // Rooms
+      (scene.rooms || []).forEach(r => {
+        esctx.fillStyle = '#E0E0E0'; esctx.fillRect(r.x, r.y, r.w, r.h);
+        esctx.strokeStyle = '#90A4AE'; esctx.lineWidth = 2; esctx.strokeRect(r.x, r.y, r.w, r.h);
+        esctx.fillStyle = '#78909C'; esctx.font = '12px sans-serif'; esctx.fillText(r.label, r.x + 8, r.y + 18);
+      });
+
+      // Obstacles
+      (scene.obstacles || []).forEach(o => {
+        if (o.type === 'mountain') {
+          esctx.fillStyle = '#795548'; esctx.beginPath();
+          esctx.moveTo(o.x + o.w / 2, o.y); esctx.lineTo(o.x + o.w, o.y + o.h); esctx.lineTo(o.x, o.y + o.h);
+          esctx.closePath(); esctx.fill();
+        } else if (o.type === 'rock') {
+          esctx.fillStyle = '#9E9E9E'; esctx.beginPath();
+          esctx.ellipse(o.x + o.w/2, o.y + o.h/2, o.w/2, o.h/2, 0, 0, Math.PI * 2); esctx.fill();
+        } else if (o.type === 'tree') {
+          esctx.fillStyle = '#5D4037'; esctx.fillRect(o.x + o.w/2 - 3, o.y + o.h/2, 6, o.h/2);
+          esctx.fillStyle = '#388E3C'; esctx.beginPath(); esctx.arc(o.x + o.w/2, o.y + o.h/2, o.w/2, 0, Math.PI * 2); esctx.fill();
+        } else {
+          esctx.fillStyle = '#B0BEC5'; esctx.fillRect(o.x, o.y, o.w, o.h);
+        }
+      });
+
+      // Doors
+      (scene.doors || []).forEach(d => {
+        esctx.fillStyle = '#8D6E63'; esctx.fillRect(d.x, d.y, d.w, d.h);
+      });
+
+      // Exits (green flash)
+      scene.exits.forEach(ex => {
+        const flash = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+        esctx.fillStyle = `rgba(76,175,80,${flash})`; esctx.fillRect(ex.x, ex.y, ex.w, ex.h);
+        esctx.fillStyle = 'white'; esctx.font = 'bold 10px sans-serif'; esctx.textAlign = 'center';
+        esctx.fillText('EXIT', ex.x + ex.w/2, ex.y + ex.h/2 + 3);
+        esctx.textAlign = 'left';
+      });
+
+      // Path trail
+      if (escapeState.path.length > 1) {
+        esctx.strokeStyle = 'rgba(33,150,243,0.3)'; esctx.lineWidth = 3;
+        esctx.beginPath(); esctx.moveTo(escapeState.path[0].x, escapeState.path[0].y);
+        escapeState.path.forEach(p => esctx.lineTo(p.x, p.y));
+        esctx.stroke();
+      }
+
+      // Player
+      esctx.fillStyle = '#2196F3'; esctx.beginPath();
+      esctx.arc(escapeState.player.x, escapeState.player.y, 10, 0, Math.PI * 2); esctx.fill();
+      esctx.strokeStyle = 'white'; esctx.lineWidth = 2; esctx.stroke();
+
+      // Disaster overlay
+      if (escapeState.active) {
+        const d = document.getElementById('escapeDisaster').value;
+        if (d === 'earthquake') {
+          esctx.strokeStyle = 'rgba(139,115,85,0.4)'; esctx.lineWidth = 1;
+          for (let i = 0; i < 8; i++) { const sx = Math.random() * 800; esctx.beginPath(); esctx.moveTo(sx, 470); esctx.lineTo(sx + 15, 465); esctx.lineTo(sx + 5, 458); esctx.lineTo(sx + 25, 450); esctx.stroke(); }
+        } else if (d === 'fire') {
+          for (let i = 0; i < 20; i++) {
+            esctx.fillStyle = ['#FF5722', '#FF9800'][i % 2]; esctx.globalAlpha = 0.3;
+            esctx.beginPath(); esctx.arc(Math.random() * 800, Math.random() * 500, 4 + Math.random() * 6, 0, Math.PI * 2); esctx.fill();
+          }
+          esctx.globalAlpha = 1;
+        } else if (d === 'flood') {
+          esctx.fillStyle = 'rgba(33,150,243,0.2)'; esctx.fillRect(0, 420, 800, 80);
+        }
+      }
+    }
+
+    function updateEscapeTips() {
+      const d = document.getElementById('escapeDisaster').value;
+      const db = DISASTER_DB[d];
+      if (db) {
+        document.getElementById('escapeKnowledge').innerHTML = `<h4>${db.name}逃生要点</h4><p>${db.duringAction.slice(0, 4).join('<br>')}</p>`;
+      }
+    }
+
+    // ========================================
+    // Tab 3: Disaster Evolution
+    // ========================================
+    let evoType = 'earthquake';
+    let evoPlaying = false;
+    let evoAnimFrame = null;
+
+    function setEvolution(type) {
+      evoType = type;
+      document.querySelectorAll('#tab-evolution .side-panel:first-child .btn-sm').forEach(b => b.className = 'btn btn-outline btn-sm');
+      event.target.className = 'btn btn-primary btn-sm';
+      drawEvolution();
+    }
+
+    function updateIntensity() {
+      const v = document.getElementById('evoIntensitySlider').value;
+      document.getElementById('evoIntensity').textContent = ['', '轻微', '中等', '强烈'][v];
+    }
+
+    function drawEvolution() {
+      const progress = document.getElementById('evoSlider').value / 100;
+      document.getElementById('evoProgress').textContent = Math.round(progress * 100) + '%';
+      const intensity = parseInt(document.getElementById('evoIntensitySlider').value);
+
+      drawEvoCanvas(document.getElementById('evoCanvasNoPrep'), false, progress, intensity);
+      drawEvoCanvas(document.getElementById('evoCanvasPrep'), true, progress, intensity);
+
+      // Update info
+      const stages = {
+        earthquake: ['平静', '微震', '强烈地震', '建筑受损', '余震中', '恢复'],
+        flood: ['正常水位', '开始上涨', '水位上升', '严重淹没', '缓慢退水', '恢复'],
+        typhoon: ['天气晴朗', '云层增多', '大风开始', '台风登陆', '逐渐减弱', '恢复']
+      };
+      const idx = Math.min(Math.floor(progress * 5), 4);
+      document.getElementById('evoInfo').innerHTML = `<h4>当前阶段：${stages[evoType][idx]}</h4><p>进度: ${Math.round(progress*100)}% | 强度: ${['','轻微','中等','强烈'][intensity]}</p>`;
+    }
+
+    function drawEvoCanvas(canvas, hasPrep, progress, intensity) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // Common scene: buildings
+      const skyColor = hasPrep ? '#87CEEB' : '#87CEEB';
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.7);
+      skyGrad.addColorStop(0, skyColor); skyGrad.addColorStop(1, '#E3F2FD');
+      ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#81C784'; ctx.fillRect(0, H * 0.7, W, H * 0.3);
+
+      const buildings = [
+        { x: 30, w: 60, h: 120 }, { x: 110, w: 50, h: 150 }, { x: 180, w: 55, h: 100 },
+        { x: 260, w: 65, h: 130 }, { x: 340, w: 50, h: 160 }
+      ];
+
+      if (evoType === 'earthquake') {
+        const shake = progress * intensity * 5;
+        const damage = progress * intensity;
+        buildings.forEach((b, i) => {
+          const sx = Math.sin(Date.now() / 100 + i) * shake * (progress > 0.1 ? 1 : 0);
+          const bx = b.x + sx;
+          const by = H * 0.7 - b.h;
+
+          if (hasPrep) {
+            // Reinforced building
+            ctx.fillStyle = '#546E7A'; ctx.fillRect(bx, by, b.w, b.h);
+            ctx.strokeStyle = '#FFC107'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, b.w, b.h); // reinforcement indicator
+            if (damage > 0.5) {
+              ctx.fillStyle = 'rgba(255,152,0,0.3)'; ctx.fillRect(bx, by + b.h * 0.6, b.w, b.h * 0.4);
+            }
+          } else {
+            ctx.fillStyle = '#78909C'; ctx.fillRect(bx, by, b.w, b.h);
+            if (damage > 0.3) {
+              ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.moveTo(bx + b.w * 0.3, by + b.h * 0.2); ctx.lineTo(bx + b.w * 0.6, by + b.h * 0.8); ctx.stroke();
+            }
+            if (damage > 0.6) {
+              ctx.fillStyle = '#B0BEC5'; ctx.fillRect(bx + b.w * 0.2, by + b.h * 0.5, b.w * 0.6, b.h * 0.5);
+            }
+            if (damage > 0.8) {
+              ctx.fillStyle = '#90A4AE';
+              ctx.fillRect(bx - 5, H * 0.7 - 10, b.w + 10, 10);
+            }
+          }
+        });
+      } else if (evoType === 'flood') {
+        buildings.forEach((b, i) => {
+          const by = H * 0.7 - b.h;
+          ctx.fillStyle = '#78909C'; ctx.fillRect(b.x, by, b.w, b.h);
+          ctx.fillStyle = '#FFF9C4'; for (let wy = by + 8; wy < by + b.h - 5; wy += 16) for (let wx = b.x + 5; wx < b.x + b.w - 5; wx += 12) ctx.fillRect(wx, wy, 6, 8);
+          if (hasPrep) {
+            // Sandbags
+            ctx.fillStyle = '#8D6E63'; ctx.fillRect(b.x - 5, H * 0.7 - 15, b.w + 10, 15);
+          }
+        });
+        // Water
+        const waterH = progress * intensity * H * 0.25;
+        if (waterH > 0) {
+          ctx.fillStyle = hasPrep ? 'rgba(33,150,243,0.3)' : 'rgba(33,150,243,0.5)';
+          ctx.fillRect(0, H * 0.7 + (H * 0.3) - waterH, W, waterH);
+          // Waves
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let x = 0; x <= W; x += 5) ctx.lineTo(x, H * 0.7 + (H * 0.3) - waterH + Math.sin(x * 0.05 + Date.now() / 500) * 3);
+          ctx.stroke();
+        }
+      } else if (evoType === 'typhoon') {
+        buildings.forEach((b, i) => {
+          const by = H * 0.7 - b.h;
+          ctx.fillStyle = '#78909C'; ctx.fillRect(b.x, by, b.w, b.h);
+          if (hasPrep) {
+            // Window protection
+            ctx.strokeStyle = '#F44336'; ctx.lineWidth = 2; ctx.strokeRect(b.x, by, b.w, b.h);
+            ctx.beginPath();
+            ctx.moveTo(b.x, by); ctx.lineTo(b.x + b.w, by + b.h);
+            ctx.moveTo(b.x + b.w, by); ctx.lineTo(b.x, by + b.h);
+            ctx.stroke();
+          }
+        });
+        // Wind lines
+        const windCount = Math.floor(progress * intensity * 15);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+        for (let i = 0; i < windCount; i++) {
+          const sx = Math.random() * W; const sy = Math.random() * H * 0.7;
+          ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 20 + Math.random() * 30, sy + (Math.random() - 0.5) * 10); ctx.stroke();
+        }
+        // Trees bending
+        for (let i = 0; i < 3; i++) {
+          const tx = 50 + i * 130; const bend = hasPrep ? progress * intensity * 10 : progress * intensity * 25;
+          ctx.strokeStyle = '#5D4037'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(tx, H * 0.7); ctx.quadraticCurveTo(tx + bend, H * 0.6, tx + bend * 1.2, H * 0.55); ctx.stroke();
+          ctx.fillStyle = '#388E3C'; ctx.beginPath(); ctx.arc(tx + bend * 1.2, H * 0.5, 12, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      // Labels
+      ctx.fillStyle = 'white'; ctx.font = 'bold 12px sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3;
+      ctx.fillText(hasPrep ? '✓ 有防范' : '✗ 无防范', 10, 20);
+      ctx.shadowBlur = 0;
+    }
+
+    function playEvolution() {
+      if (evoPlaying) { evoPlaying = false; if (evoAnimFrame) cancelAnimationFrame(evoAnimFrame); return; }
+      evoPlaying = true;
+      const slider = document.getElementById('evoSlider');
+      slider.value = 0;
+      function step() {
+        if (!evoPlaying) return;
+        slider.value = Math.min(parseInt(slider.value) + 1, 100);
+        drawEvolution();
+        if (parseInt(slider.value) >= 100) { evoPlaying = false; return; }
+        evoAnimFrame = requestAnimationFrame(step);
+      }
+      step();
+    }
+
+    // Initial draws
+    drawEscapeScene();
+    drawEvolution();
+  </script>
+</body>
+</html>

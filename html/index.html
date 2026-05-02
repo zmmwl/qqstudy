@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全守护者 — 自然灾害防范 AI 互动科普平台</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #2196F3 0%, #1565C0 50%, #0D47A1 100%);
+      color: white;
+      padding: 60px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      animation: drift 20s linear infinite;
+    }
+    @keyframes drift {
+      from { transform: translate(0, 0); }
+      to { transform: translate(30px, 30px); }
+    }
+    .hero h1 {
+      font-size: 40px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .hero p {
+      font-size: 18px;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero .stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-top: 32px;
+      position: relative;
+    }
+    .hero .stat { text-align: center; }
+    .hero .stat-num { font-size: 32px; font-weight: 700; }
+    .hero .stat-label { font-size: 13px; opacity: 0.8; }
+
+    .modules { padding: 40px 0; }
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .section-desc {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .module-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      position: relative;
+      overflow: hidden;
+    }
+    .module-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+    }
+    .module-card .icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+    .module-card h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    .module-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .module-card .arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .mc-text .icon-wrap { background: #E3F2FD; }
+    .mc-text .arrow { color: #2196F3; }
+    .mc-media .icon-wrap { background: #F3E5F5; }
+    .mc-media .arrow { color: #9C27B0; }
+    .mc-voice .icon-wrap { background: #FFF3E0; }
+    .mc-voice .arrow { color: #FF9800; }
+    .mc-twin .icon-wrap { background: #E8F5E9; }
+    .mc-twin .arrow { color: #4CAF50; }
+
+    /* 灾害知识卡片 */
+    .disaster-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .disaster-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .disaster-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
+    }
+    .disaster-card .d-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+    .disaster-card .d-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .disaster-card .d-desc {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    /* 快速知识弹窗 */
+    .knowledge-modal .modal {
+      max-width: 700px;
+    }
+    .knowledge-modal .km-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .knowledge-modal .km-icon { font-size: 40px; }
+    .knowledge-modal .km-title { font-size: 22px; font-weight: 700; }
+    .knowledge-modal .km-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .knowledge-modal .km-tab {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      color: var(--text-secondary);
+    }
+    .knowledge-modal .km-tab.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom: 2px solid var(--primary);
+    }
+    .knowledge-modal .km-content ul {
+      list-style: none;
+      padding: 0;
+    }
+    .knowledge-modal .km-content li {
+      padding: 8px 0;
+      border-bottom: 1px solid #F5F5F5;
+      font-size: 14px;
+      line-height: 1.6;
+      display: flex;
+      gap: 8px;
+    }
+    .knowledge-modal .km-content li::before {
+      content: '•';
+      color: var(--primary);
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 1024px) {
+      .module-grid { grid-template-columns: repeat(2, 1fr); }
+      .disaster-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .hero { padding: 40px 16px; }
+      .hero h1 { font-size: 28px; }
+      .hero .stats { gap: 24px; }
+      .module-grid { grid-template-columns: 1fr; }
+      .disaster-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="white" stroke-width="2"/><path d="M14 6v8l5 3" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M9 18l3-2 3 2 3-2" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      安全守护者
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="active">首页</a>
+      <a href="pages/text-gen.html">文本生成</a>
+      <a href="pages/media-gen.html">图像/视频</a>
+      <a href="pages/voice-interact.html">语音交互</a>
+      <a href="pages/digital-twin.html">数字孪生</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>🛡️ 安全守护者</h1>
+    <p>AI 驱动的自然灾害防范互动科普平台，涵盖 10 种常见灾害类型，提供文本、图像、语音、模拟四大工具模块</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-num">10</div><div class="stat-label">灾害类型覆盖</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">AI 工具模块</div></div>
+      <div class="stat"><div class="stat-num">200+</div><div class="stat-label">知识条目</div></div>
+    </div>
+  </section>
+
+  <div class="container">
+    <section class="modules">
+      <div class="section-title">四大 AI 工具模块</div>
+      <div class="section-desc">点击进入对应工具，开始你的防灾科普创作之旅</div>
+      <div class="module-grid">
+        <a href="pages/text-gen.html" class="module-card mc-text">
+          <div class="icon-wrap">📝</div>
+          <h3>AI 文本生成</h3>
+          <p>自动生成防灾宣传文案、应急预案方案、安全知识问答库</p>
+          <div class="arrow">开始使用 →</div>
+        </a>
+        <a href="pages/media-gen.html" class="module-card mc-media">
+          <div class="icon-wrap">🎬</div>
+          <h3>图像/视频生成</h3>
+          <p>制作灾害科普动画、场景还原图、互动信息图表</p>
+          <div class="arrow">开始使用 →</div>
+        </a>
+        <a href="pages/voice-interact.html" class="module-card mc-voice">
+          <div class="icon-wrap">🎙️</div>
+          <h3>语音交互工具</h3>
+          <p>语音防灾问答、安全提醒播客生成、语音知识播报</p>
+          <div class="arrow">开始使用 →</div>
+        </a>
+        <a href="pages/digital-twin.html" class="module-card mc-twin">
+          <div class="icon-wrap">🏗️</div>
+          <h3>数字孪生模拟</h3>
+          <p>搭建应急场景、逃生路线模拟演练、灾害演变展示</p>
+          <div class="arrow">开始使用 →</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="modules">
+      <div class="section-title">自然灾害知识库</div>
+      <div class="section-desc">点击卡片快速查看各类灾害的防范知识</div>
+      <div class="disaster-grid" id="disasterGrid"></div>
+    </section>
+  </div>
+
+  <div class="knowledge-modal" id="knowledgeModal" style="display:none;"></div>
+
+  <script src="js/common.js"></script>
+  <script>
+    // 渲染灾害卡片
+    const grid = document.getElementById('disasterGrid');
+    DISASTER_TYPES.forEach(d => {
+      const card = document.createElement('div');
+      card.className = 'disaster-card';
+      card.innerHTML = `<div class="d-icon">${d.icon}</div><div class="d-name">${d.name}</div><div class="d-desc">${d.basics[0].substring(0, 20)}...</div>`;
+      card.onclick = () => showKnowledge(d.id);
+      grid.appendChild(card);
+    });
+
+    function showKnowledge(id) {
+      const d = DISASTER_DB[id];
+      if (!d) return;
+
+      const tabs = [
+        { key: 'basics', label: '基础知识' },
+        { key: 'signs', label: '前兆识别' },
+        { key: 'preparation', label: '事前准备' },
+        { key: 'duringAction', label: '应急避险' },
+        { key: 'afterAction', label: '灾后处理' }
+      ];
+
+      const modal = document.getElementById('knowledgeModal');
+      modal.style.display = '';
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeKnowledge(event)">
+          <div class="modal" onclick="event.stopPropagation()">
+            <div class="km-header">
+              <span class="km-icon">${d.icon}</span>
+              <div>
+                <div class="km-title">${d.name}防范知识</div>
+                <div style="font-size:13px;color:#999;">点击标签切换内容</div>
+              </div>
+            </div>
+            <div class="km-tabs">
+              ${tabs.map((t, i) => `<button class="km-tab ${i===0?'active':''}" onclick="switchTab(this,'${t.key}','${id}')">${t.label}</button>`).join('')}
+            </div>
+            <div class="km-content" id="kmContent">
+              <ul>${d.basics.map(s => `<li>${s}</li>`).join('')}</ul>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" onclick="closeKnowledge()">关闭</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function switchTab(btn, key, id) {
+      const d = DISASTER_DB[id];
+      document.querySelectorAll('.km-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const items = d[key] || [];
+      document.getElementById('kmContent').innerHTML = `<ul>${items.map(s => `<li>${s}</li>`).join('')}</ul>`;
+    }
+
+    function closeKnowledge(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('knowledgeModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

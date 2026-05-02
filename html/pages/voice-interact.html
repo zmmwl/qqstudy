@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>语音交互工具 — 安全守护者</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <style>
+    /* ===== 页面布局 ===== */
+    .page-body {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    /* ===== Tab 导航 ===== */
+    .tab-nav {
+      display: flex;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      padding: 14px 24px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--primary); }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ===== Tab 内容 ===== */
+    .tab-panel {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+    }
+    .tab-panel.active {
+      display: flex;
+    }
+
+    /* ==========================================================
+       Tab1: 语音防灾问答 — 聊天界面
+       ========================================================== */
+    .chat-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* 侧边灾害分类 */
+    .chat-sidebar {
+      width: 200px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .chat-sidebar h4 {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+    .disaster-quick-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      background: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      transition: var(--transition);
+      text-align: left;
+    }
+    .disaster-quick-btn:hover {
+      background: var(--primary-light);
+    }
+    .disaster-quick-btn .dq-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* 聊天主体 */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 消息气泡 */
+    .msg {
+      display: flex;
+      gap: 10px;
+      max-width: 75%;
+      animation: msgIn 0.3s ease;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .msg.bot .msg-avatar { background: #E3F2FD; }
+    .msg.user .msg-avatar { background: #FFF3E0; }
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+    .msg.bot .msg-bubble {
+      background: #F0F4F8;
+      border-top-left-radius: 4px;
+    }
+    .msg.user .msg-bubble {
+      background: var(--primary);
+      color: white;
+      border-top-right-radius: 4px;
+    }
+    .msg-bubble .msg-action {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+    .msg-bubble .msg-action button {
+      font-size: 12px;
+      padding: 4px 10px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .msg.bot .msg-action button {
+      background: #E3F2FD;
+      color: var(--primary);
+    }
+    .msg.bot .msg-action button:hover {
+      background: #BBDEFB;
+    }
+
+    /* 输入区 */
+    .chat-input-bar {
+      padding: 12px 24px 16px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-input-bar input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+      transition: var(--transition);
+    }
+    .chat-input-bar input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .mic-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .mic-btn:hover { background: var(--primary-dark); }
+    .mic-btn.recording {
+      background: var(--danger);
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244,67,54,0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(244,67,54,0); }
+    }
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--success);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { background: #388E3C; }
+    .send-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* 欢迎消息 */
+    .welcome-box {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-light);
+    }
+    .welcome-box .wb-icon { font-size: 48px; margin-bottom: 12px; }
+    .welcome-box h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+    .welcome-box p { font-size: 14px; line-height: 1.8; max-width: 500px; margin: 0 auto; }
+
+    /* ==========================================================
+       Tab2: 安全提醒播客生成器
+       ========================================================== */
+    .podcast-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .podcast-config {
+      width: 360px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .podcast-config h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .podcast-preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .podcast-text-area {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+    .podcast-text-area textarea {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .podcast-text-area textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .podcast-controls {
+      padding: 16px 24px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .play-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .play-btn.play { background: var(--primary); color: white; }
+    .play-btn.play:hover { background: var(--primary-dark); }
+    .play-btn.pause { background: var(--warning); color: white; }
+    .play-btn.stop { background: var(--text-light); color: white; }
+    .play-btn.stop:hover { background: var(--text-secondary); }
+
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .slider-group label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .slider-group input[type="range"] {
+      width: 100px;
+      accent-color: var(--primary);
+    }
+    .slider-val {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .voice-select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      outline: none;
+      max-width: 180px;
+    }
+
+    .podcast-progress {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .podcast-progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    /* ==========================================================
+       Tab3: 声音复刻演示
+       ========================================================== */
+    .voice-clone-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .vc-left {
+      width: 400px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .vc-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .vc-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .template-btn {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: left;
+      line-height: 1.4;
+    }
+    .template-btn:hover {
+      border-color: var(--primary);
+      background: #F8FBFF;
+    }
+    .template-btn.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    /* 录音控制 */
+    .record-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rec-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--danger);
+      background: white;
+      color: var(--danger);
+      font-size: 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .rec-btn:hover { background: #FFEBEE; }
+    .rec-btn.recording {
+      background: var(--danger);
+      color: white;
+      animation: pulse 1.2s infinite;
+    }
+    .rec-status {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .rec-status.active { color: var(--danger); font-weight: 600; }
+
+    /* 波形可视化 */
+    .waveform-wrap {
+      background: #1a1a2e;
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-top: 8px;
+    }
+    .waveform-wrap canvas {
+      width: 100%;
+      height: 100px;
+      display: block;
+      border-radius: 4px;
+    }
+
+    /* TTS 播放区 */
+    .vc-play-area {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .vc-selected-text {
+      padding: 16px;
+      background: #F0F4F8;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.7;
+      border-left: 4px solid var(--primary);
+    }
+    .vc-tts-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .vc-recordings {
+      padding: 0 20px 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .vc-recording-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #FAFAFA;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      transition: var(--transition);
+    }
+    .vc-recording-item:hover { border-color: var(--primary); }
+    .vc-recording-item .rec-info {
+      flex: 1;
+      font-size: 13px;
+    }
+    .vc-recording-item .rec-info .rec-name { font-weight: 500; }
+    .vc-recording-item .rec-info .rec-dur { color: var(--text-light); font-size: 12px; }
+    .vc-recording-item button {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .vc-recording-item button:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* 空状态 */
+    .vc-empty {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    /* ===== 不支持提示 ===== */
+    .api-warning {
+      padding: 12px 16px;
+      background: #FFF3E0;
+      border: 1px solid #FFE0B2;
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: #E65100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 900px) {
+      .chat-sidebar { display: none; }
+      .podcast-config { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .podcast-layout { flex-direction: column; }
+      .voice-clone-layout { flex-direction: column; }
+      .vc-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .tab-btn { padding: 12px 14px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <div id="navbar-slot"></div>
+
+  <div class="page-body">
+    <!-- Tab 导航 -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="qa">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        语音防灾问答
+      </button>
+      <button class="tab-btn" data-tab="podcast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        安全提醒播客
+      </button>
+      <button class="tab-btn" data-tab="clone">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        声音复刻演示
+      </button>
+    </div>
+
+    <!-- ==================== Tab 1: 语音防灾问答 ==================== -->
+    <div class="tab-panel active" id="panel-qa">
+      <div class="chat-layout">
+        <!-- 侧边灾害分类 -->
+        <div class="chat-sidebar" id="chatSidebar">
+          <h4>灾害分类快捷查询</h4>
+        </div>
+        <!-- 聊天主体 -->
+        <div class="chat-main">
+          <div class="chat-messages" id="chatMessages">
+            <div class="welcome-box" id="chatWelcome">
+              <div class="wb-icon">🎙️</div>
+              <h3>语音防灾问答助手</h3>
+              <p>点击麦克风按钮说出你的防灾问题，或直接输入文字提问。<br>我会从知识库中为你匹配答案并语音播报。</p>
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input type="text" id="chatInput" placeholder="输入你的防灾问题..." autocomplete="off">
+            <button class="mic-btn" id="micBtn" title="语音输入">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <button class="send-btn" id="sendBtn" title="发送">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== Tab 2: 播客生成器 ==================== -->
+    <div class="tab-panel" id="panel-podcast">
+      <div class="podcast-layout">
+        <!-- 左侧配置 -->
+        <div class="podcast-config">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            播客配置
+          </h3>
+          <div class="form-group">
+            <label>灾害类型</label>
+            <div id="podcastDisasterSelect"></div>
+          </div>
+          <div class="form-group">
+            <label>选择声音</label>
+            <select class="form-control" id="podcastVoice"></select>
+          </div>
+          <div class="form-group">
+            <label>语速 <span class="slider-val" id="rateVal">1.0x</span></label>
+            <input type="range" id="podcastRate" min="0.5" max="2" step="0.1" value="1" style="width:100%;accent-color:var(--primary)">
+          </div>
+          <div class="form-group">
+            <label>音调 <span class="slider-val" id="pitchVal">1.0</span></label>
+            <input type="range" id="podcastPitch" min="0.5" max="2" step="0.1" value="1" style="width:100%;accent-color:var(--primary)">
+          </div>
+          <div class="btn-group" style="margin-top:16px;">
+            <button class="btn btn-primary" id="generatePodcastBtn">生成播客文案</button>
+            <button class="btn btn-outline" id="exportPodcastBtn">导出文案</button>
+          </div>
+        </div>
+
+        <!-- 右侧预览与播放 -->
+        <div class="podcast-preview">
+          <div class="podcast-text-area">
+            <textarea id="podcastText" placeholder="选择灾害类型后点击"生成播客文案"，或直接编辑内容..."></textarea>
+          </div>
+          <div class="podcast-controls">
+            <div class="play-btn-group">
+              <button class="play-btn play" id="podcastPlay" title="播放">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <button class="play-btn pause" id="podcastPause" title="暂停">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              </button>
+              <button class="play-btn stop" id="podcastStop" title="停止">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+              </button>
+            </div>
+            <div style="flex:1;">
+              <div class="podcast-progress">
+                <div class="podcast-progress-bar" id="podcastProgress"></div>
+              </div>
+            </div>
+            <span id="podcastStatus" style="font-size:12px;color:var(--text-light);min-width:60px;text-align:right;">就绪</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== Tab 3: 声音复刻演示 ==================== -->
+    <div class="tab-panel" id="panel-clone">
+      <div class="voice-clone-layout">
+        <!-- 左侧配置 -->
+        <div class="vc-left">
+          <!-- 场景模板 -->
+          <div class="vc-section">
+            <h4>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              安全提醒场景模板
+            </h4>
+            <div class="template-grid" id="templateGrid"></div>
+          </div>
+
+          <!-- 录音控制 -->
+          <div class="vc-section">
+            <h4>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+              录制你的声音
+            </h4>
+            <div class="record-controls">
+              <button class="rec-btn" id="recBtn" title="开始/停止录音">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+              </button>
+              <div>
+                <div class="rec-status" id="recStatus">点击开始录音</div>
+                <div style="font-size:12px;color:var(--text-light);margin-top:2px;" id="recTimer">00:00</div>
+              </div>
+            </div>
+            <div class="waveform-wrap">
+              <canvas id="waveformCanvas" width="360" height="100"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧播放 -->
+        <div class="vc-right">
+          <div class="vc-play-area">
+            <div class="vc-section">
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                TTS 安全提醒
+              </h4>
+            </div>
+            <div class="vc-selected-text" id="vcSelectedText">请从左侧选择一个场景模板</div>
+            <div class="vc-tts-controls">
+              <button class="btn btn-primary btn-sm" id="vcPlayTTS">播放 TTS</button>
+              <button class="btn btn-outline btn-sm" id="vcStopTTS">停止</button>
+              <select class="voice-select" id="vcVoiceSelect"></select>
+            </div>
+          </div>
+          <div class="vc-recordings">
+            <div class="vc-section">
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                录音文件
+              </h4>
+            </div>
+            <div id="recordingsList">
+              <div class="vc-empty">还没有录音文件，请先录制一段语音</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    // ==================== 初始化 ====================
+    document.getElementById('navbar-slot').innerHTML = getNavbarHTML('voice-interact');
+
+    // 检测浏览器 API 支持
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechSynthesis = window.speechSynthesis;
+    const SpeechSynthesisUtterance = window.SpeechSynthesisUtterance;
+    const hasRecognition = !!SpeechRecognition;
+    const hasSynthesis = !!speechSynthesis && !!SpeechSynthesisUtterance;
+    const hasMediaRecorder = !!window.MediaRecorder;
+
+    // ==================== Tab 切换 ====================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ==================== 声音列表 ====================
+    let voices = [];
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      // 筛选中文声音
+      const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
+      const voiceOptions = zhVoices.length ? zhVoices : voices;
+
+      // 播客声音选择器
+      const podcastVoiceEl = document.getElementById('podcastVoice');
+      podcastVoiceEl.innerHTML = voiceOptions.map((v, i) =>
+        `<option value="${i}">${v.name} (${v.lang})</option>`
+      ).join('');
+      if (!voiceOptions.length) {
+        podcastVoiceEl.innerHTML = '<option>未检测到可用声音</option>';
+      }
+
+      // 声音复刻声音选择器
+      const vcVoiceEl = document.getElementById('vcVoiceSelect');
+      vcVoiceEl.innerHTML = voiceOptions.map((v, i) =>
+        `<option value="${i}">${v.name} (${v.lang})</option>`
+      ).join('');
+      if (!voiceOptions.length) {
+        vcVoiceEl.innerHTML = '<option>未检测到可用声音</option>';
+      }
+    }
+    if (hasSynthesis) {
+      speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+
+    // ==================== Tab1: 语音防灾问答 ====================
+
+    // 侧边灾害分类按钮
+    const chatSidebar = document.getElementById('chatSidebar');
+    DISASTER_TYPES.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'disaster-quick-btn';
+      btn.innerHTML = `<span class="dq-icon">${d.icon}</span><span>${d.name}</span>`;
+      btn.addEventListener('click', () => {
+        // 发送快捷查询
+        const question = `请介绍${d.name}的防范知识`;
+        addUserMessage(question);
+        respondToUser(question);
+      });
+      chatSidebar.appendChild(btn);
+    });
+
+    // 聊天消息管理
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+
+    function clearWelcome() {
+      const w = document.getElementById('chatWelcome');
+      if (w) w.remove();
+    }
+
+    function addUserMessage(text) {
+      clearWelcome();
+      const div = document.createElement('div');
+      div.className = 'msg user';
+      div.innerHTML = `<div class="msg-avatar">🙋</div><div class="msg-bubble">${escapeHTML(text)}</div>`;
+      chatMessages.appendChild(div);
+      scrollChat();
+    }
+
+    function addBotMessage(text, speak = true) {
+      const div = document.createElement('div');
+      div.className = 'msg bot';
+      div.innerHTML = `
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">
+          ${text}
+          <div class="msg-action">
+            <button onclick="replayMsg(this)" title="重新播报">🔊 重新播报</button>
+          </div>
+        </div>`;
+      chatMessages.appendChild(div);
+      scrollChat();
+      if (speak && hasSynthesis) {
+        speakText(stripHTML(text));
+      }
+    }
+
+    function addTypingIndicator() {
+      const div = document.createElement('div');
+      div.className = 'msg bot';
+      div.id = 'typingIndicator';
+      div.innerHTML = `
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">
+          <div class="loading" style="padding:4px 0;">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+          </div>
+        </div>`;
+      chatMessages.appendChild(div);
+      scrollChat();
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById('typingIndicator');
+      if (el) el.remove();
+    }
+
+    function scrollChat() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 匹配知识库回答
+    function respondToUser(question) {
+      addTypingIndicator();
+      setTimeout(() => {
+        removeTypingIndicator();
+        const answer = matchAnswer(question);
+        addBotMessage(answer);
+      }, 600 + Math.random() * 400);
+    }
+
+    function matchAnswer(question) {
+      const q = question.toLowerCase();
+
+      // 先在 qa 库中精确匹配
+      for (const d of DISASTER_TYPES) {
+        for (const item of d.qa) {
+          if (q.includes(item.q.substring(0, 6)) || similarity(q, item.q) > 0.4) {
+            return item.a;
+          }
+        }
+      }
+
+      // 关键词匹配灾害类型
+      for (const d of DISASTER_TYPES) {
+        if (q.includes(d.name) || q.includes(d.id)) {
+          // 判断问题类型
+          if (q.includes('前兆') || q.includes('征兆') || q.includes('预兆') || q.includes('迹象')) {
+            return `<strong>${d.icon} ${d.name}前兆识别：</strong><br><br>` +
+              d.signs.map(s => '• ' + s).join('<br>');
+          }
+          if (q.includes('准备') || q.includes('预防') || q.includes('防范') || q.includes('应急包')) {
+            return `<strong>${d.icon} ${d.name}防范准备：</strong><br><br>` +
+              d.preparation.map(s => '• ' + s).join('<br>');
+          }
+          if (q.includes('发生时') || q.includes('怎么办') || q.includes('避险') || q.includes('应对') || q.includes('应急')) {
+            return `<strong>${d.icon} ${d.name}应急避险：</strong><br><br>` +
+              d.duringAction.map(s => '• ' + s).join('<br>');
+          }
+          if (q.includes('之后') || q.includes('灾后') || q.includes('事后')) {
+            return `<strong>${d.icon} ${d.name}灾后处理：</strong><br><br>` +
+              d.afterAction.map(s => '• ' + s).join('<br>');
+          }
+          if (q.includes('原因') || q.includes('成因') || q.includes('为什么')) {
+            return `<strong>${d.icon} ${d.name}的成因：</strong><br><br>` +
+              d.causes.map(s => '• ' + s).join('<br>');
+          }
+          // 默认给出基础知识+防范提示
+          return `<strong>${d.icon} ${d.name}防范知识：</strong><br><br>` +
+            d.basics.map(s => '• ' + s).join('<br>') +
+            '<br><br><strong>防范要点：</strong><br>' +
+            d.preparation.slice(0, 3).map(s => '• ' + s).join('<br>') +
+            '<br><br>你还可以问我关于' + d.name + '的前兆识别、应急避险、灾后处理等问题。';
+        }
+      }
+
+      // 通用关键词
+      if (q.includes('应急包') || q.includes('准备')) {
+        return '<strong>应急包准备建议：</strong><br><br>' +
+          '• 饮用水（3天量，每人每天至少3升）<br>' +
+          '• 压缩食品和罐头<br>' +
+          '• 手电筒和备用电池<br>' +
+          '• 急救药品包<br>' +
+          '• 求生哨子<br>' +
+          '• 身份证件复印件<br>' +
+          '• 手机充电宝<br>' +
+          '• 多功能刀具<br>' +
+          '• 雨衣/保暖毯<br><br>' +
+          '建议每半年检查一次应急包，及时更换过期物品。';
+      }
+
+      if (q.includes('你好') || q.includes('你是谁') || q.includes('hello')) {
+        return '你好！我是安全守护者语音防灾助手 🤖<br><br>我可以回答你关于各类自然灾害的防范知识，包括地震、洪水、台风、暴雨、雷电、火灾、泥石流、滑坡、高温热浪、寒潮等。<br><br>你可以直接说出你的问题，也可以点击左侧的灾害分类快速查询。';
+      }
+
+      // 未匹配到
+      return '我不太确定这个问题的答案 😅<br><br>不过我可以帮你解答以下方面的问题：<br>' +
+        '• 各种自然灾害的基础知识<br>' +
+        '• 灾害前兆识别方法<br>' +
+        '• 应急避险和自救互救<br>' +
+        '• 灾后恢复与处理<br>' +
+        '• 应急物资准备<br><br>' +
+        '试试问我"地震来了怎么办"或"台风如何防范"吧！';
+    }
+
+    // 简单文本相似度
+    function similarity(s1, s2) {
+      const set1 = new Set(s1.split(''));
+      const set2 = new Set(s2.split(''));
+      const intersection = new Set([...set1].filter(x => set2.has(x)));
+      return intersection.size / Math.max(set1.size, set2.size);
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function stripHTML(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent || div.innerText || '';
+    }
+
+    // 发送消息
+    sendBtn.addEventListener('click', () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatInput.value = '';
+      addUserMessage(text);
+      respondToUser(text);
+    });
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+
+    // 语音识别
+    let recognition = null;
+    let isRecording = false;
+
+    if (hasRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'zh-CN';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onresult = function(event) {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          chatInput.value = finalTranscript;
+          addUserMessage(finalTranscript);
+          chatInput.value = '';
+          respondToUser(finalTranscript);
+        } else if (interimTranscript) {
+          chatInput.value = interimTranscript;
+        }
+      };
+
+      recognition.onend = function() {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+      };
+
+      recognition.onerror = function(e) {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        if (e.error === 'not-allowed') {
+          showToast('请允许麦克风权限后重试', 'error');
+        } else if (e.error !== 'aborted') {
+          showToast('语音识别出错：' + e.error, 'error');
+        }
+      };
+    } else {
+      micBtn.style.display = 'none';
+      // 添加提示
+      const bar = document.querySelector('.chat-input-bar');
+      const warning = document.createElement('div');
+      warning.className = 'api-warning';
+      warning.style.marginBottom = '8px';
+      warning.innerHTML = '⚠️ 当前浏览器不支持语音识别，已降级为文字输入模式。建议使用 Chrome 浏览器。';
+      bar.parentNode.insertBefore(warning, bar);
+    }
+
+    micBtn.addEventListener('click', () => {
+      if (!hasRecognition) return;
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        chatInput.value = '';
+        chatInput.placeholder = '正在聆听...';
+        recognition.start();
+        setTimeout(() => {
+          chatInput.placeholder = '输入你的防灾问题...';
+        }, 100);
+      }
+    });
+
+    // TTS 语音播报
+    let currentUtterance = null;
+    let isSpeaking = false;
+
+    function speakText(text) {
+      if (!hasSynthesis) return;
+      speechSynthesis.cancel();
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      currentUtterance.lang = 'zh-CN';
+      currentUtterance.rate = 1;
+      currentUtterance.pitch = 1;
+
+      // 使用中文声音
+      const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
+      if (zhVoices.length) {
+        currentUtterance.voice = zhVoices[0];
+      }
+
+      currentUtterance.onend = () => { isSpeaking = false; };
+      currentUtterance.onerror = () => { isSpeaking = false; };
+      isSpeaking = true;
+      speechSynthesis.speak(currentUtterance);
+    }
+
+    // 全局重新播报
+    window.replayMsg = function(btn) {
+      const bubble = btn.closest('.msg-bubble');
+      const text = bubble.textContent.replace('🔊 重新播报', '').trim();
+      speakText(text);
+    };
+
+
+    // ==================== Tab2: 播客生成器 ====================
+
+    // 灾害选择器
+    document.getElementById('podcastDisasterSelect').innerHTML = getDisasterSelector('podcastDisaster', 'podcastDisaster');
+
+    // 语速/音调滑块
+    const rateSlider = document.getElementById('podcastRate');
+    const pitchSlider = document.getElementById('podcastPitch');
+    rateSlider.addEventListener('input', () => {
+      document.getElementById('rateVal').textContent = parseFloat(rateSlider.value).toFixed(1) + 'x';
+    });
+    pitchSlider.addEventListener('input', () => {
+      document.getElementById('pitchVal').textContent = parseFloat(pitchSlider.value).toFixed(1);
+    });
+
+    // 生成播客文案
+    document.getElementById('generatePodcastBtn').addEventListener('click', () => {
+      const sel = document.getElementById('podcastDisaster');
+      const dId = sel.value;
+      if (!dId) {
+        showToast('请先选择灾害类型', 'warning');
+        return;
+      }
+      const d = DISASTER_DB[dId];
+      if (!d) return;
+
+      const now = formatDate();
+      const script = `[安全守护者播客] ${d.name}安全防范专题\n` +
+        `生成时间：${now}\n` +
+        `${'='.repeat(40)}\n\n` +
+        `【开场白】\n` +
+        `大家好，欢迎收听"安全守护者"防灾科普播客。今天我们的话题是关于${d.name}的安全防范知识。\n` +
+        `${d.name}是一种${d.basics[0]}。让我们一起了解如何科学应对。\n\n` +
+        `【知识讲解】\n` +
+        `${d.basics.map((s, i) => `要点${i + 1}：${s}`).join('\n\n')}\n\n` +
+        `${d.name}的主要成因包括：\n${d.causes.map(s => '· ' + s).join('\n')}\n\n` +
+        `如何识别${d.name}的前兆？请注意以下信号：\n${d.signs.map(s => '⚠ ' + s).join('\n')}\n\n` +
+        `【安全提醒】\n` +
+        `事前准备：\n${d.preparation.map(s => '✓ ' + s).join('\n')}\n\n` +
+        `应急避险：\n${d.duringAction.map(s => '★ ' + s).join('\n')}\n\n` +
+        `灾后处理：\n${d.afterAction.map(s => '→ ' + s).join('\n')}\n\n` +
+        `【结尾】\n` +
+        `以上就是关于${d.name}的安全防范知识。希望大家永远用不上这些知识，但一定要牢记在心。\n` +
+        `安全守护者，守护您和家人的安全。我们下期再见！\n`;
+
+      document.getElementById('podcastText').value = script;
+      showToast('播客文案已生成', 'success');
+    });
+
+    // 导出文案
+    document.getElementById('exportPodcastBtn').addEventListener('click', () => {
+      const text = document.getElementById('podcastText').value.trim();
+      if (!text) {
+        showToast('文案内容为空', 'warning');
+        return;
+      }
+      downloadFile(text, '安全守护者播客文案_' + formatDate().replace(/[: ]/g, '_') + '.txt');
+    });
+
+    // 播客播放控制
+    let podcastUtterance = null;
+    let podcastPlaying = false;
+    let podcastPaused = false;
+
+    function getSelectedVoice() {
+      const sel = document.getElementById('podcastVoice');
+      const idx = parseInt(sel.value);
+      const allVoices = speechSynthesis.getVoices();
+      const zhVoices = allVoices.filter(v => v.lang.startsWith('zh'));
+      const voiceList = zhVoices.length ? zhVoices : allVoices;
+      return voiceList[idx] || null;
+    }
+
+    document.getElementById('podcastPlay').addEventListener('click', () => {
+      if (!hasSynthesis) { showToast('浏览器不支持语音合成', 'error'); return; }
+      const text = document.getElementById('podcastText').value.trim();
+      if (!text) { showToast('请先生成或输入播客文案', 'warning'); return; }
+
+      if (podcastPaused) {
+        speechSynthesis.resume();
+        podcastPaused = false;
+        podcastPlaying = true;
+        document.getElementById('podcastStatus').textContent = '播放中';
+        return;
+      }
+
+      speechSynthesis.cancel();
+      podcastUtterance = new SpeechSynthesisUtterance(text);
+      podcastUtterance.lang = 'zh-CN';
+      podcastUtterance.rate = parseFloat(rateSlider.value);
+      podcastUtterance.pitch = parseFloat(pitchSlider.value);
+
+      const voice = getSelectedVoice();
+      if (voice) podcastUtterance.voice = voice;
+
+      podcastUtterance.onstart = () => {
+        podcastPlaying = true;
+        document.getElementById('podcastStatus').textContent = '播放中';
+        startPodcastProgress(text.length);
+      };
+      podcastUtterance.onend = () => {
+        podcastPlaying = false;
+        document.getElementById('podcastStatus').textContent = '播放完毕';
+        document.getElementById('podcastProgress').style.width = '100%';
+        setTimeout(() => {
+          document.getElementById('podcastProgress').style.width = '0%';
+        }, 1000);
+      };
+      podcastUtterance.onerror = () => {
+        podcastPlaying = false;
+        document.getElementById('podcastStatus').textContent = '出错';
+      };
+
+      speechSynthesis.speak(podcastUtterance);
+    });
+
+    let podcastProgressTimer = null;
+    function startPodcastProgress(len) {
+      clearInterval(podcastProgressTimer);
+      const duration = Math.max(len * 60, 5000);
+      const start = Date.now();
+      const bar = document.getElementById('podcastProgress');
+      podcastProgressTimer = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const pct = Math.min((elapsed / duration) * 100, 100);
+        bar.style.width = pct + '%';
+        if (pct >= 100) clearInterval(podcastProgressTimer);
+      }, 200);
+    }
+
+    document.getElementById('podcastPause').addEventListener('click', () => {
+      if (podcastPlaying && !podcastPaused) {
+        speechSynthesis.pause();
+        podcastPaused = true;
+        podcastPlaying = false;
+        document.getElementById('podcastStatus').textContent = '已暂停';
+      }
+    });
+
+    document.getElementById('podcastStop').addEventListener('click', () => {
+      speechSynthesis.cancel();
+      podcastPlaying = false;
+      podcastPaused = false;
+      clearInterval(podcastProgressTimer);
+      document.getElementById('podcastProgress').style.width = '0%';
+      document.getElementById('podcastStatus').textContent = '就绪';
+    });
+
+
+    // ==================== Tab3: 声音复刻演示 ====================
+
+    // 场景模板
+    const TEMPLATES = [
+      { id: 'earthquake', name: '地震避险', text: '地震来了，请立即蹲下、掩护、抓牢！远离窗户和外墙，保护好头部。震动停止后有序撤离，不要使用电梯。' },
+      { id: 'flood', name: '暴雨洪水', text: '暴雨预警！请远离河边和低洼地带，不要涉水行走。立即向高处转移，注意防范山洪和泥石流。' },
+      { id: 'typhoon', name: '台风预警', text: '台风预警生效中，请关好门窗，加固室外物品。台风期间不要外出，远离广告牌和大树，注意安全。' },
+      { id: 'fire', name: '火灾警报', text: '火灾警报！请立即沿安全通道低姿撤离，用湿毛巾捂住口鼻。不要乘坐电梯，不要返回取物。到达安全区域后拨打119。' },
+      { id: 'lightning', name: '雷电安全', text: '雷暴天气请注意安全！远离大树、电线杆等高耸物体。不要在空旷场地停留，室内远离门窗和金属管道。' },
+      { id: 'heatwave', name: '高温提醒', text: '高温橙色预警！请避免在中午时段外出，注意补充水分。如感到头晕、乏力，立即到阴凉处休息。' },
+      { id: 'mudslide', name: '泥石流预警', text: '泥石流预警！山谷附近居民请立即向两侧高地转移，不要顺沟谷方向逃跑。远离河道和沟口区域。' },
+      { id: 'coldwave', name: '寒潮提醒', text: '寒潮蓝色预警！请做好防寒保暖，注意水管防冻。使用煤炉取暖务必保持通风，防止一氧化碳中毒。' }
+    ];
+
+    let selectedTemplate = null;
+    const templateGrid = document.getElementById('templateGrid');
+    TEMPLATES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'template-btn';
+      btn.textContent = t.name;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedTemplate = t;
+        document.getElementById('vcSelectedText').textContent = t.text;
+      });
+      templateGrid.appendChild(btn);
+    });
+
+    // 录音功能
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingStartTime = 0;
+    let recordingTimer = null;
+    let audioContext = null;
+    let analyser = null;
+    let audioStream = null;
+    let recordings = [];
+
+    const recBtn = document.getElementById('recBtn');
+    const recStatus = document.getElementById('recStatus');
+    const recTimerEl = document.getElementById('recTimer');
+    const waveformCanvas = document.getElementById('waveformCanvas');
+    const waveCtx = waveformCanvas.getContext('2d');
+
+    // 初始化波形画布
+    function clearWaveform() {
+      waveCtx.fillStyle = '#1a1a2e';
+      waveCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+      waveCtx.strokeStyle = '#2196F3';
+      waveCtx.lineWidth = 1;
+      waveCtx.beginPath();
+      waveCtx.moveTo(0, waveformCanvas.height / 2);
+      waveCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
+      waveCtx.stroke();
+    }
+    clearWaveform();
+
+    function drawWaveform() {
+      if (!analyser) return;
+      const bufferLength = analyser.fftSize;
+      const dataArray = new Uint8Array(bufferLength);
+      analyser.getByteTimeDomainData(dataArray);
+
+      waveCtx.fillStyle = '#1a1a2e';
+      waveCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+
+      // 绘制中线
+      waveCtx.strokeStyle = 'rgba(33,150,243,0.2)';
+      waveCtx.lineWidth = 1;
+      waveCtx.beginPath();
+      waveCtx.moveTo(0, waveformCanvas.height / 2);
+      waveCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
+      waveCtx.stroke();
+
+      // 绘制波形
+      waveCtx.lineWidth = 2;
+      waveCtx.strokeStyle = '#2196F3';
+      waveCtx.beginPath();
+
+      const sliceWidth = waveformCanvas.width / bufferLength;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * waveformCanvas.height) / 2;
+        if (i === 0) waveCtx.moveTo(x, y);
+        else waveCtx.lineTo(x, y);
+        x += sliceWidth;
+      }
+      waveCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
+      waveCtx.stroke();
+
+      // 渐变填充
+      const gradient = waveCtx.createLinearGradient(0, 0, 0, waveformCanvas.height);
+      gradient.addColorStop(0, 'rgba(33,150,243,0.1)');
+      gradient.addColorStop(0.5, 'rgba(33,150,243,0.05)');
+      gradient.addColorStop(1, 'rgba(33,150,243,0.1)');
+      waveCtx.fillStyle = gradient;
+      waveCtx.lineTo(0, waveformCanvas.height);
+      waveCtx.lineTo(0, 0);
+      waveCtx.fill();
+
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        requestAnimationFrame(drawWaveform);
+      }
+    }
+
+    recBtn.addEventListener('click', async () => {
+      if (!hasMediaRecorder) {
+        showToast('当前浏览器不支持录音功能', 'error');
+        return;
+      }
+
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        // 停止录音
+        mediaRecorder.stop();
+        recBtn.classList.remove('recording');
+        recStatus.textContent = '录音完成';
+        recStatus.classList.remove('active');
+        clearInterval(recordingTimer);
+        if (audioStream) {
+          audioStream.getTracks().forEach(t => t.stop());
+        }
+        return;
+      }
+
+      // 开始录音
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(audioStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser);
+
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(audioStream);
+        mediaRecorder.ondataavailable = e => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const duration = Math.round((Date.now() - recordingStartTime) / 1000);
+          const recording = {
+            id: Date.now(),
+            name: '录音_' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            url: url,
+            blob: blob,
+            duration: duration
+          };
+          recordings.push(recording);
+          renderRecordings();
+          showToast('录音已保存', 'success');
+        };
+
+        mediaRecorder.start();
+        recordingStartTime = Date.now();
+        recBtn.classList.add('recording');
+        recStatus.textContent = '录音中...';
+        recStatus.classList.add('active');
+
+        // 计时器
+        recTimerEl.textContent = '00:00';
+        recordingTimer = setInterval(() => {
+          const elapsed = Math.round((Date.now() - recordingStartTime) / 1000);
+          const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+          const s = String(elapsed % 60).padStart(2, '0');
+          recTimerEl.textContent = m + ':' + s;
+        }, 1000);
+
+        // 波形绘制
+        drawWaveform();
+
+      } catch (err) {
+        showToast('无法访问麦克风：' + err.message, 'error');
+      }
+    });
+
+    function renderRecordings() {
+      const list = document.getElementById('recordingsList');
+      if (!recordings.length) {
+        list.innerHTML = '<div class="vc-empty">还没有录音文件，请先录制一段语音</div>';
+        return;
+      }
+      list.innerHTML = recordings.map(r => {
+        const dur = String(Math.floor(r.duration / 60)).padStart(2, '0') + ':' + String(r.duration % 60).padStart(2, '0');
+        return `<div class="vc-recording-item">
+          <span style="font-size:18px;">🎵</span>
+          <div class="rec-info">
+            <div class="rec-name">${escapeHTML(r.name)}</div>
+            <div class="rec-dur">时长 ${dur}</div>
+          </div>
+          <button onclick="playRecording(${r.id})">▶ 播放</button>
+          <button onclick="downloadRecording(${r.id})">⬇ 下载</button>
+        </div>`;
+      }).join('');
+    }
+
+    window.playRecording = function(id) {
+      const rec = recordings.find(r => r.id === id);
+      if (!rec) return;
+      const audio = new Audio(rec.url);
+      audio.play();
+    };
+
+    window.downloadRecording = function(id) {
+      const rec = recordings.find(r => r.id === id);
+      if (!rec) return;
+      const a = document.createElement('a');
+      a.href = rec.url;
+      a.download = rec.name + '.webm';
+      a.click();
+      showToast('音频文件已下载', 'success');
+    };
+
+    // TTS 播放安全提醒
+    document.getElementById('vcPlayTTS').addEventListener('click', () => {
+      if (!hasSynthesis) { showToast('浏览器不支持语音合成', 'error'); return; }
+      if (!selectedTemplate) { showToast('请先选择场景模板', 'warning'); return; }
+
+      speechSynthesis.cancel();
+      const text = selectedTemplate.text;
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'zh-CN';
+
+      // 选择声音
+      const vcVoiceSel = document.getElementById('vcVoiceSelect');
+      const idx = parseInt(vcVoiceSel.value);
+      const allVoices = speechSynthesis.getVoices();
+      const zhVoices = allVoices.filter(v => v.lang.startsWith('zh'));
+      const voiceList = zhVoices.length ? zhVoices : allVoices;
+      if (voiceList[idx]) utt.voice = voiceList[idx];
+
+      utt.rate = 0.9;
+      utt.pitch = 1.1;
+      speechSynthesis.speak(utt);
+      showToast('正在播放安全提醒', 'info');
+    });
+
+    document.getElementById('vcStopTTS').addEventListener('click', () => {
+      speechSynthesis.cancel();
+    });
+
+  })();
+  </script>
+</body>
+</html>

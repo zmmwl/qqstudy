@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图像/视频生成 - 安全守护者</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <style>
+    .workspace { display: grid; grid-template-columns: 240px 1fr; gap: 20px; min-height: calc(100vh - 110px); }
+    .tool-panel { background: var(--card); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow); height: fit-content; position: sticky; top: 80px; }
+    .canvas-area { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+    .canvas-toolbar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .canvas-toolbar label { font-size: 13px; color: var(--text-secondary); }
+    .canvas-toolbar input[type="range"] { width: 100px; }
+    .canvas-wrap { display: flex; align-items: center; justify-content: center; padding: 20px; background: #1a1a2e; }
+    canvas#mainCanvas { border-radius: 4px; display: block; max-width: 100%; }
+    .tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    .tab-bar button { padding: 10px 20px; border: none; background: none; cursor: pointer; font-size: 14px; color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab-bar button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .panel-section { margin-bottom: 16px; }
+    .panel-section h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .template-btn { padding: 10px 8px; border: 2px solid var(--border); border-radius: var(--radius); background: white; cursor: pointer; text-align: center; font-size: 12px; transition: var(--transition); }
+    .template-btn:hover { border-color: var(--primary); }
+    .template-btn.active { border-color: var(--primary); background: var(--primary-light); }
+    .template-btn .t-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+    .color-picker-row { display: flex; gap: 6px; align-items: center; }
+    .color-picker-row input[type="color"] { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; padding: 2px; }
+    .chart-data-editor { width: 100%; min-height: 80px; font-size: 12px; font-family: monospace; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); resize: vertical; }
+    .speed-display { font-size: 12px; color: var(--primary); font-weight: 600; min-width: 30px; text-align: center; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="logo">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="white" stroke-width="2"/><path d="M14 6v8l5 3" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M9 18l3-2 3 2 3-2" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      安全守护者
+    </a>
+    <div class="nav-links">
+      <a href="../index.html">首页</a>
+      <a href="text-gen.html">文本生成</a>
+      <a href="media-gen.html" class="active">图像/视频</a>
+      <a href="voice-interact.html">语音交互</a>
+      <a href="digital-twin.html">数字孪生</a>
+    </div>
+  </nav>
+
+  <div class="container-wide">
+    <div class="tab-bar" id="mainTab">
+      <button class="active" onclick="switchMainTab('animation')">🎬 科普动画</button>
+      <button onclick="switchMainTab('scene')">🖼️ 场景还原</button>
+      <button onclick="switchMainTab('chart')">📊 信息图表</button>
+    </div>
+
+    <div class="workspace">
+      <!-- Left Tool Panel -->
+      <div class="tool-panel" id="toolPanel">
+        <!-- Animation Controls -->
+        <div id="panel-animation">
+          <div class="panel-section">
+            <h4>选择模板</h4>
+            <div class="template-grid" id="animTemplates">
+              <button class="template-btn active" onclick="selectAnim('earthquake')"><span class="t-icon">🌍</span>地震波</button>
+              <button class="template-btn" onclick="selectAnim('flood')"><span class="t-icon">🌊</span>洪水</button>
+              <button class="template-btn" onclick="selectAnim('typhoon')"><span class="t-icon">🌀</span>台风</button>
+              <button class="template-btn" onclick="selectAnim('fire')"><span class="t-icon">🔥</span>火灾</button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h4>动画速度</h4>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="range" id="animSpeed" min="0.2" max="3" step="0.1" value="1" style="flex:1;" oninput="document.getElementById('speedVal').textContent=this.value+'x'">
+              <span class="speed-display" id="speedVal">1x</span>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h4>文字标注</h4>
+            <input type="text" class="form-control" id="animLabel" placeholder="自定义标注文字" value="">
+          </div>
+          <div class="panel-section">
+            <h4>配色</h4>
+            <div class="color-picker-row">
+              <label>主色</label>
+              <input type="color" id="animColor1" value="#2196F3">
+              <label>辅色</label>
+              <input type="color" id="animColor2" value="#FF9800">
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene Controls (hidden by default) -->
+        <div id="panel-scene" style="display:none;">
+          <div class="panel-section">
+            <h4>选择场景</h4>
+            <div class="template-grid">
+              <button class="template-btn active" onclick="selectScene('eq_scene')"><span class="t-icon">🏚️</span>震后</button>
+              <button class="template-btn" onclick="selectScene('flood_scene')"><span class="t-icon">🏙️</span>洪涝</button>
+              <button class="template-btn" onclick="selectScene('typhoon_scene')"><span class="t-icon">🌴</span>台风</button>
+              <button class="template-btn" onclick="selectScene('fire_scene')"><span class="t-icon">🏠</span>火灾</button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h4>添加标注</h4>
+            <input type="text" class="form-control" id="sceneText" placeholder="标注文字">
+            <button class="btn btn-sm btn-outline" style="margin-top:6px;width:100%;" onclick="addSceneLabel()">添加到画布</button>
+          </div>
+        </div>
+
+        <!-- Chart Controls (hidden by default) -->
+        <div id="panel-chart" style="display:none;">
+          <div class="panel-section">
+            <h4>图表类型</h4>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm btn-primary" onclick="selectChart('bar')">柱状图</button>
+              <button class="btn btn-sm btn-outline" onclick="selectChart('pie')">饼图</button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h4>数据（每行：名称,数值）</h4>
+            <textarea class="chart-data-editor" id="chartData">地震,32
+洪水,28
+台风,22
+火灾,18
+泥石流,12
+滑坡,8
+雷电,6
+暴雨,15
+高温,10
+寒潮,5</textarea>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="renderChart()">生成图表</button>
+        </div>
+      </div>
+
+      <!-- Main Canvas Area -->
+      <div class="canvas-area">
+        <div class="canvas-toolbar">
+          <button class="btn btn-sm btn-primary" id="playBtn" onclick="togglePlay()">▶ 播放</button>
+          <button class="btn btn-sm btn-outline" onclick="resetAnim()">↺ 重置</button>
+          <span style="flex:1;"></span>
+          <button class="btn btn-sm btn-outline" onclick="exportPNG()">📷 导出图片</button>
+          <button class="btn btn-sm btn-outline" id="recordBtn" onclick="toggleRecord()">🔴 录制视频</button>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="mainCanvas" width="800" height="500"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentTab = 'animation';
+    let currentAnim = 'earthquake';
+    let currentScene = 'eq_scene';
+    let currentChart = 'bar';
+    let isPlaying = false;
+    let animFrame = null;
+    let animTime = 0;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let sceneLabels = [];
+
+    function switchMainTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('#mainTab button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('panel-animation').style.display = tab === 'animation' ? '' : 'none';
+      document.getElementById('panel-scene').style.display = tab === 'scene' ? '' : 'none';
+      document.getElementById('panel-chart').style.display = tab === 'chart' ? '' : 'none';
+      stopAnim();
+      sceneLabels = [];
+      if (tab === 'animation') { selectAnim(currentAnim); }
+      else if (tab === 'scene') { selectScene(currentScene); }
+      else { renderChart(); }
+    }
+
+    function selectAnim(type) {
+      currentAnim = type;
+      document.querySelectorAll('#animTemplates .template-btn').forEach(b => b.classList.remove('active'));
+      event.target.closest('.template-btn').classList.add('active');
+      stopAnim(); animTime = 0; drawFrame();
+    }
+    function selectScene(type) {
+      currentScene = type;
+      document.querySelectorAll('#panel-scene .template-btn').forEach(b => b.classList.remove('active'));
+      event.target.closest('.template-btn').classList.add('active');
+      sceneLabels = [];
+      drawScene();
+    }
+    function selectChart(type) {
+      currentChart = type;
+      document.querySelectorAll('#panel-chart .btn-sm').forEach(b => { b.className = 'btn btn-sm btn-outline'; });
+      event.target.className = 'btn btn-sm btn-primary';
+      renderChart();
+    }
+
+    function togglePlay() {
+      if (isPlaying) { stopAnim(); }
+      else { isPlaying = true; document.getElementById('playBtn').textContent = '⏸ 暂停'; animLoop(); }
+    }
+    function stopAnim() { isPlaying = false; document.getElementById('playBtn').textContent = '▶ 播放'; if (animFrame) cancelAnimationFrame(animFrame); }
+    function resetAnim() { stopAnim(); animTime = 0; drawFrame(); }
+    function animLoop() {
+      if (!isPlaying) return;
+      animTime += 0.016 * parseFloat(document.getElementById('animSpeed').value);
+      drawFrame();
+      animFrame = requestAnimationFrame(animLoop);
+    }
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, 800, 500);
+      if (currentTab === 'animation') {
+        if (currentAnim === 'earthquake') drawEarthquake();
+        else if (currentAnim === 'flood') drawFlood();
+        else if (currentAnim === 'typhoon') drawTyphoon();
+        else if (currentAnim === 'fire') drawFire();
+      }
+    }
+
+    // ===== Earthquake Animation =====
+    function drawEarthquake() {
+      const t = animTime;
+      const c1 = document.getElementById('animColor1').value;
+      const c2 = document.getElementById('animColor2').value;
+      const label = document.getElementById('animLabel').value;
+
+      // Sky
+      const grad = ctx.createLinearGradient(0, 0, 0, 500);
+      grad.addColorStop(0, '#87CEEB'); grad.addColorStop(1, '#E0F0FF');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 500);
+
+      // Ground with wave
+      ctx.fillStyle = '#8B7355';
+      ctx.beginPath(); ctx.moveTo(0, 400);
+      for (let x = 0; x <= 800; x += 5) {
+        const shake = Math.sin(x * 0.02 + t * 8) * (5 + t * 3) * Math.min(t * 0.5, 1);
+        ctx.lineTo(x, 400 + shake);
+      }
+      ctx.lineTo(800, 500); ctx.lineTo(0, 500); ctx.closePath(); ctx.fill();
+
+      // Seismic waves
+      ctx.strokeStyle = c1; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+      for (let w = 0; w < 5; w++) {
+        const r = (t * 80 + w * 60) % 400;
+        ctx.beginPath();
+        ctx.arc(400, 450, r, Math.PI, 0);
+        ctx.globalAlpha = Math.max(0, 0.6 - r / 500);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Buildings with shake
+      const buildings = [
+        { x: 100, w: 60, h: 120 }, { x: 200, w: 50, h: 160 }, { x: 300, w: 70, h: 100 },
+        { x: 430, w: 55, h: 140 }, { x: 530, w: 65, h: 110 }, { x: 640, w: 50, h: 150 }
+      ];
+      buildings.forEach((b, i) => {
+        const shakeX = Math.sin(t * 10 + i) * (2 + t * 2) * Math.min(t * 0.5, 1);
+        const shakeY = Math.cos(t * 8 + i * 1.5) * (1 + t) * Math.min(t * 0.5, 1);
+        const bx = b.x + shakeX; const by = 400 - b.h + shakeY;
+
+        ctx.fillStyle = '#607D8B'; ctx.fillRect(bx, by, b.w, b.h);
+        // Windows
+        ctx.fillStyle = '#FFF9C4';
+        for (let wy = by + 15; wy < by + b.h - 10; wy += 25) {
+          for (let wx = bx + 8; wx < bx + b.w - 8; wx += 18) {
+            if (Math.random() > 0.1) ctx.fillRect(wx, wy, 10, 12);
+          }
+        }
+        // Cracks after strong shake
+        if (t > 2) {
+          ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(bx + b.w * 0.3, by + b.h * 0.2);
+          ctx.lineTo(bx + b.w * 0.5, by + b.h * 0.5);
+          ctx.lineTo(bx + b.w * 0.7, by + b.h * 0.8);
+          ctx.stroke();
+        }
+      });
+
+      // Info text
+      ctx.fillStyle = 'white'; ctx.font = 'bold 16px sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
+      const magnitude = Math.min(t * 2, 8).toFixed(1);
+      ctx.fillText(`震级: M${magnitude}`, 20, 30);
+      ctx.fillText(`地震波传播模拟`, 20, 55);
+      if (label) ctx.fillText(label, 20, 80);
+      ctx.shadowBlur = 0;
+    }
+
+    // ===== Flood Animation =====
+    function drawFlood() {
+      const t = animTime;
+      const c1 = document.getElementById('animColor1').value;
+      const label = document.getElementById('animLabel').value;
+
+      // Sky
+      const grad = ctx.createLinearGradient(0, 0, 0, 500);
+      grad.addColorStop(0, '#546E7A'); grad.addColorStop(1, '#90A4AE');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 500);
+
+      // Rain
+      ctx.strokeStyle = 'rgba(200,230,255,0.4)'; ctx.lineWidth = 1;
+      for (let i = 0; i < 80; i++) {
+        const rx = (i * 37 + t * 100) % 820 - 10;
+        const ry = (i * 53 + t * 300) % 520 - 10;
+        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 2, ry + 12); ctx.stroke();
+      }
+
+      // Buildings
+      const waterLevel = 300 + Math.min(t * 15, 100);
+      const buildings = [
+        { x: 80, w: 70, h: 130, color: '#795548' }, { x: 200, w: 55, h: 170, color: '#5D4037' },
+        { x: 320, w: 80, h: 140, color: '#6D4C41' }, { x: 470, w: 60, h: 160, color: '#795548' },
+        { x: 580, w: 75, h: 120, color: '#5D4037' }, { x: 700, w: 55, h: 150, color: '#6D4C41' }
+      ];
+      buildings.forEach((b, i) => {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, 400 - b.h, b.w, b.h);
+        ctx.fillStyle = '#FFF9C4';
+        for (let wy = 400 - b.h + 15; wy < 400 - 10; wy += 22) {
+          for (let wx = b.x + 8; wx < b.x + b.w - 8; wx += 16) {
+            ctx.fillRect(wx, wy, 8, 10);
+          }
+        }
+      });
+
+      // Water
+      ctx.fillStyle = 'rgba(33,150,243,0.6)';
+      ctx.beginPath(); ctx.moveTo(0, waterLevel);
+      for (let x = 0; x <= 800; x += 10) {
+        const wave = Math.sin(x * 0.03 + t * 3) * 8 + Math.sin(x * 0.01 + t * 2) * 5;
+        ctx.lineTo(x, waterLevel + wave);
+      }
+      ctx.lineTo(800, 500); ctx.lineTo(0, 500); ctx.closePath(); ctx.fill();
+
+      // Warning level markers
+      const levels = [{ y: 400, text: '警戒线', color: '#FF9800' }, { y: 350, text: '危险线', color: '#F44336' }];
+      levels.forEach(l => {
+        ctx.strokeStyle = l.color; ctx.lineWidth = 2; ctx.setLineDash([8, 4]);
+        ctx.beginPath(); ctx.moveTo(0, l.y); ctx.lineTo(800, l.y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = l.color; ctx.font = '12px sans-serif'; ctx.fillText(l.text, 700, l.y - 5);
+      });
+
+      // Info
+      ctx.fillStyle = 'white'; ctx.font = 'bold 16px sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
+      const depth = Math.max(0, Math.min((waterLevel - 400) * -1, 100)).toFixed(0);
+      ctx.fillText(`水位上涨: ${depth > 0 ? depth : 0}cm`, 20, 30);
+      ctx.fillText('洪水模拟', 20, 55);
+      if (label) ctx.fillText(label, 20, 80);
+      ctx.shadowBlur = 0;
+    }
+
+    // ===== Typhoon Animation =====
+    function drawTyphoon() {
+      const t = animTime;
+      const c1 = document.getElementById('animColor1').value;
+
+      // Dark sky
+      const grad = ctx.createLinearGradient(0, 0, 0, 500);
+      grad.addColorStop(0, '#37474F'); grad.addColorStop(1, '#546E7A');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 500);
+
+      // Spiral bands
+      const cx = 400, cy = 220;
+      for (let arm = 0; arm < 5; arm++) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(200,200,200,${0.3 + arm * 0.05})`;
+        ctx.lineWidth = 12 - arm;
+        for (let angle = 0; angle < Math.PI * 4; angle += 0.05) {
+          const r = angle * 15 + arm * 25;
+          const a = angle + t * 1.5 + arm * Math.PI * 0.4;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r * 0.6;
+          if (angle === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // Eye
+      ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#455A64'; ctx.fill();
+      ctx.strokeStyle = '#B0BEC5'; ctx.lineWidth = 3; ctx.stroke();
+
+      // Rain bands
+      ctx.strokeStyle = 'rgba(100,180,255,0.2)'; ctx.lineWidth = 1;
+      for (let i = 0; i < 50; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 50 + Math.random() * 200;
+        const x = cx + Math.cos(a + t) * r;
+        const y = cy + Math.sin(a + t) * r;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 10); ctx.stroke();
+      }
+
+      // Ground & wind indicator
+      ctx.fillStyle = '#2E7D32'; ctx.fillRect(0, 420, 800, 80);
+      // Trees bending
+      for (let i = 0; i < 8; i++) {
+        const tx = 60 + i * 100;
+        const bend = Math.sin(t * 3 + i) * 15 + 20;
+        ctx.strokeStyle = '#5D4037'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(tx, 420); ctx.quadraticCurveTo(tx + bend, 370, tx + bend * 1.2, 350); ctx.stroke();
+        ctx.fillStyle = '#388E3C';
+        ctx.beginPath(); ctx.arc(tx + bend * 1.2, 345, 15, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Wind level
+      const windLevel = Math.min(Math.floor(t * 3) + 8, 17);
+      ctx.fillStyle = 'white'; ctx.font = 'bold 16px sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
+      ctx.fillText(`风力: ${windLevel}级`, 20, 30);
+      ctx.fillText('台风旋转模拟', 20, 55);
+      const lbl = document.getElementById('animLabel').value;
+      if (lbl) ctx.fillText(lbl, 20, 80);
+      ctx.shadowBlur = 0;
+    }
+
+    // ===== Fire Animation =====
+    function drawFire() {
+      const t = animTime;
+      const c2 = document.getElementById('animColor2').value;
+
+      // Room
+      ctx.fillStyle = '#EFEBE9'; ctx.fillRect(0, 0, 800, 500);
+      // Floor
+      ctx.fillStyle = '#8D6E63'; ctx.fillRect(0, 380, 800, 120);
+      // Walls
+      ctx.fillStyle = '#D7CCC8'; ctx.fillRect(0, 0, 800, 30);
+
+      // Door
+      ctx.fillStyle = '#6D4C41'; ctx.fillRect(650, 200, 80, 180);
+      ctx.fillStyle = '#FFC107'; ctx.beginPath(); ctx.arc(720, 290, 4, 0, Math.PI * 2); ctx.fill();
+      // Exit sign
+      ctx.fillStyle = '#4CAF50'; ctx.fillRect(650, 175, 80, 22);
+      ctx.fillStyle = 'white'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('安全出口', 656, 192);
+
+      // Furniture
+      ctx.fillStyle = '#795548'; ctx.fillRect(50, 300, 120, 80); // table
+      ctx.fillStyle = '#A1887F'; ctx.fillRect(200, 260, 20, 120); ctx.fillRect(220, 260, 60, 20); // shelf
+      // Window
+      ctx.fillStyle = '#B3E5FC'; ctx.fillRect(300, 100, 100, 80);
+      ctx.strokeStyle = '#5D4037'; ctx.lineWidth = 4; ctx.strokeRect(300, 100, 100, 80);
+      ctx.beginPath(); ctx.moveTo(350, 100); ctx.lineTo(350, 180); ctx.moveTo(300, 140); ctx.lineTo(400, 140); ctx.stroke();
+
+      // Fire particles
+      const fireIntensity = Math.min(t * 0.3, 1);
+      for (let i = 0; i < 60 * fireIntensity; i++) {
+        const fx = 50 + Math.random() * 200;
+        const fy = 350 - Math.random() * (80 + t * 20);
+        const size = 3 + Math.random() * 8 * fireIntensity;
+        const colors = ['#FF5722', '#FF9800', '#FFC107', '#F44336'];
+        ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+        ctx.globalAlpha = 0.4 + Math.random() * 0.5;
+        ctx.beginPath(); ctx.arc(fx + Math.sin(t * 5 + i) * 5, fy - Math.random() * 20 * t * 0.5, size, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Smoke
+      for (let i = 0; i < 20 * fireIntensity; i++) {
+        const sx = 50 + Math.random() * 200;
+        const sy = 250 - Math.random() * 200 - t * 5;
+        ctx.fillStyle = `rgba(100,100,100,${0.1 + Math.random() * 0.15})`;
+        ctx.beginPath(); ctx.arc(sx, sy, 10 + Math.random() * 15, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Escape arrow
+      ctx.strokeStyle = '#4CAF50'; ctx.lineWidth = 3; ctx.setLineDash([8, 4]);
+      ctx.beginPath(); ctx.moveTo(400, 300); ctx.lineTo(650, 300); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#4CAF50'; ctx.beginPath(); ctx.moveTo(650, 300); ctx.lineTo(638, 293); ctx.lineTo(638, 307); ctx.closePath(); ctx.fill();
+
+      // Info
+      ctx.fillStyle = 'white'; ctx.font = 'bold 16px sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
+      ctx.fillText('火灾蔓延模拟', 20, 30);
+      ctx.fillStyle = '#4CAF50';
+      ctx.fillText('→ 沿绿色箭头方向逃生', 20, 55);
+      const lbl = document.getElementById('animLabel').value;
+      if (lbl) { ctx.fillStyle = 'white'; ctx.fillText(lbl, 20, 80); }
+      ctx.shadowBlur = 0;
+    }
+
+    // ===== Scene Drawing =====
+    function drawScene() {
+      ctx.clearRect(0, 0, 800, 500);
+      if (currentScene === 'eq_scene') drawSceneEQ();
+      else if (currentScene === 'flood_scene') drawSceneFlood();
+      else if (currentScene === 'typhoon_scene') drawSceneTyphoon();
+      else if (currentScene === 'fire_scene') drawSceneFire();
+      // Draw labels
+      sceneLabels.forEach(l => {
+        ctx.fillStyle = 'white'; ctx.font = 'bold 14px sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 3;
+        ctx.fillText(l.text, l.x, l.y);
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    function drawSceneEQ() {
+      // Destroyed city scene
+      const grad = ctx.createLinearGradient(0, 0, 0, 500);
+      grad.addColorStop(0, '#B0BEC5'); grad.addColorStop(1, '#CFD8DC');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 500);
+      ctx.fillStyle = '#8B7355'; ctx.fillRect(0, 380, 800, 120);
+      // Cracked ground
+      ctx.strokeStyle = '#5D4037'; ctx.lineWidth = 2;
+      [[100,400,200,420,350,390],[500,380,600,410,750,395]].forEach(pts => {
+        ctx.beginPath(); ctx.moveTo(pts[0],pts[1]); ctx.lineTo(pts[2],pts[3]); ctx.lineTo(pts[4],pts[5]); ctx.stroke();
+      });
+      // Damaged buildings
+      [[80,180,60,200,'#78909C'],[200,120,70,260,'#607D8B'],[340,200,80,180,'#78909C'],[500,150,55,230,'#607D8B'],[620,190,65,190,'#78909C']].forEach(b => {
+        ctx.fillStyle = b[5]; ctx.fillRect(b[0],b[1],b[2],b[3]);
+        ctx.fillStyle = '#FFF9C4';
+        for(let y=b[1]+10;y<b[1]+b[3]-10;y+=20) for(let x=b[0]+8;x<b[0]+b[2]-8;x+=15) ctx.fillRect(x,y,8,10);
+      });
+      // Rubble
+      ctx.fillStyle = '#90A4AE';
+      [[150,380,40,15],[350,375,30,12],[550,382,35,10]].forEach(r => ctx.fillRect(r[0],r[1],r[2],r[3]));
+      // Title
+      ctx.fillStyle = '#333'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('震后场景还原图', 20, 30);
+      ctx.font = '13px sans-serif'; ctx.fillStyle = '#666';
+      ctx.fillText('建筑物受损、地面裂缝、余震风险', 20, 52);
+    }
+
+    function drawSceneFlood() {
+      const grad = ctx.createLinearGradient(0, 0, 0, 500);
+      grad.addColorStop(0, '#546E7A'); grad.addColorStop(1, '#78909C');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 500);
+      // Water
+      ctx.fillStyle = 'rgba(33,150,243,0.5)'; ctx.fillRect(0, 250, 800, 250);
+      // Submerged buildings
+      [[60,150,60,250],[200,100,70,300],[380,120,55,280],[520,80,65,320],[680,130,50,270]].forEach(b => {
+        ctx.fillStyle = '#455A64'; ctx.fillRect(b[0],b[1],b[2],b[3]);
+        ctx.fillStyle = '#FFF9C4'; for(let y=b[1]+12;y<250;y+=20) for(let x=b[0]+6;x<b[0]+b[2]-6;x+=14) ctx.fillRect(x,y,8,10);
+      });
+      // Water surface waves
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+      for(let y=252;y<500;y+=20){ctx.beginPath(); for(let x=0;x<=800;x+=5){ctx.lineTo(x,y+Math.sin(x*0.05+y)*3);}ctx.stroke();}
+      ctx.fillStyle = '#333'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('城市洪涝场景还原图', 20, 30);
+    }
+
+    function drawSceneTyphoon() {
+      const grad = ctx.createLinearGradient(0,0,0,500);
+      grad.addColorStop(0,'#37474F'); grad.addColorStop(1,'#455A64');
+      ctx.fillStyle = grad; ctx.fillRect(0,0,800,500);
+      ctx.fillStyle = '#2E7D32'; ctx.fillRect(0,400,800,100);
+      // Bent trees
+      for(let i=0;i<6;i++){
+        const tx=80+i*130; const bend=30+Math.random()*20;
+        ctx.strokeStyle='#5D4037';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(tx,400);ctx.quadraticCurveTo(tx+bend*0.5,350,tx+bend,320);ctx.stroke();
+        ctx.fillStyle='#1B5E20';ctx.beginPath();ctx.arc(tx+bend,310,18,0,Math.PI*2);ctx.fill();
+      }
+      // Fallen signs
+      ctx.fillStyle='#F44336';ctx.fillRect(300,360,80,8);ctx.fillRect(530,370,60,6);
+      // Rain
+      ctx.strokeStyle='rgba(200,230,255,0.3)';ctx.lineWidth=1;
+      for(let i=0;i<120;i++){const rx=Math.random()*800,ry=Math.random()*500;ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx-3,ry+15);ctx.stroke();}
+      ctx.fillStyle='white';ctx.font='bold 20px sans-serif';ctx.fillText('台风过后场景还原图',20,30);
+    }
+
+    function drawSceneFire() {
+      ctx.fillStyle='#EFEBE9';ctx.fillRect(0,0,800,500);
+      ctx.fillStyle='#8D6E63';ctx.fillRect(0,380,800,120);
+      // Room with fire damage
+      ctx.fillStyle='#424242';ctx.fillRect(50,100,700,280); // darkened walls
+      // Burned furniture
+      ctx.fillStyle='#3E2723';ctx.fillRect(80,280,100,100);ctx.fillRect(600,250,70,130);
+      // Fire damage marks
+      ctx.fillStyle='#BF360C';
+      [[100,200,80,60],[400,150,60,80],[550,220,40,50]].forEach(r=>ctx.fillRect(r[0],r[1],r[2],r[3]));
+      // Remaining fire
+      for(let i=0;i<15;i++){
+        ctx.fillStyle=['#FF5722','#FF9800','#FFC107'][i%3];ctx.globalAlpha=0.5;
+        ctx.beginPath();ctx.arc(100+Math.random()*60,300+Math.random()*30,3+Math.random()*5,0,Math.PI*2);ctx.fill();
+      }
+      ctx.globalAlpha=1;
+      // Exit sign (still visible)
+      ctx.fillStyle='#4CAF50';ctx.fillRect(650,160,80,22);ctx.fillStyle='white';ctx.font='bold 13px sans-serif';ctx.fillText('安全出口',656,177);
+      ctx.fillStyle='#333';ctx.font='bold 20px sans-serif';ctx.fillText('火灾场景还原图',20,30);
+    }
+
+    function addSceneLabel() {
+      const text = document.getElementById('sceneText').value;
+      if (!text) { showToast('请输入标注文字', 'error'); return; }
+      sceneLabels.push({ text, x: 50 + Math.random() * 600, y: 50 + Math.random() * 300 });
+      drawScene();
+      showToast('标注已添加', 'success');
+    }
+
+    // ===== Chart Drawing =====
+    function renderChart() {
+      ctx.clearRect(0, 0, 800, 500);
+      const rawData = document.getElementById('chartData').value.trim();
+      const rows = rawData.split('\n').filter(r => r.trim()).map(r => {
+        const parts = r.split(',').map(s => s.trim());
+        return { name: parts[0] || '', value: parseFloat(parts[1]) || 0 };
+      });
+      if (!rows.length) return;
+
+      ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 800, 500);
+      ctx.fillStyle = '#333'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('中国自然灾害发生频次统计', 250, 35);
+      ctx.font = '12px sans-serif'; ctx.fillStyle = '#999'; ctx.fillText('数据来源：模拟数据 | 仅供参考', 300, 55);
+
+      if (currentChart === 'bar') drawBarChart(rows);
+      else drawPieChart(rows);
+    }
+
+    function drawBarChart(rows) {
+      const maxVal = Math.max(...rows.map(r => r.value));
+      const colors = ['#2196F3','#FF9800','#4CAF50','#F44336','#9C27B0','#00BCD4','#FFC107','#795548','#607D8B','#E91E63'];
+      const barW = 50, gap = 20, startX = 80, chartH = 350, chartY = 400;
+
+      // Y axis
+      ctx.strokeStyle = '#E0E0E0'; ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = chartY - (chartH / 5) * i;
+        ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(780, y); ctx.stroke();
+        ctx.fillStyle = '#999'; ctx.font = '11px sans-serif'; ctx.fillText(Math.round(maxVal / 5 * i), startX - 35, y + 4);
+      }
+
+      rows.forEach((r, i) => {
+        const x = startX + 20 + i * (barW + gap);
+        const h = (r.value / maxVal) * chartH;
+        const y = chartY - h;
+        // Bar with gradient
+        const grad = ctx.createLinearGradient(x, y, x, chartY);
+        grad.addColorStop(0, colors[i % colors.length]); grad.addColorStop(1, colors[i % colors.length] + '88');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, h, [4, 4, 0, 0]);
+        ctx.fill();
+        // Value
+        ctx.fillStyle = '#333'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(r.value, x + barW / 2, y - 8);
+        // Label
+        ctx.font = '11px sans-serif'; ctx.fillStyle = '#666';
+        ctx.fillText(r.name, x + barW / 2, chartY + 18);
+        ctx.textAlign = 'left';
+      });
+    }
+
+    function drawPieChart(rows) {
+      const total = rows.reduce((s, r) => s + r.value, 0);
+      const colors = ['#2196F3','#FF9800','#4CAF50','#F44336','#9C27B0','#00BCD4','#FFC107','#795548','#607D8B','#E91E63'];
+      const cx = 300, cy = 270, r = 180;
+      let startAngle = -Math.PI / 2;
+
+      rows.forEach((row, i) => {
+        const sliceAngle = (row.value / total) * Math.PI * 2;
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+        ctx.fillStyle = colors[i % colors.length]; ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+        // Label
+        const midAngle = startAngle + sliceAngle / 2;
+        const lx = cx + Math.cos(midAngle) * (r * 0.65);
+        const ly = cy + Math.sin(midAngle) * (r * 0.65);
+        ctx.fillStyle = 'white'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(row.name, lx, ly);
+        ctx.font = '10px sans-serif'; ctx.fillText(((row.value / total) * 100).toFixed(1) + '%', lx, ly + 14);
+        startAngle += sliceAngle;
+      });
+      ctx.textAlign = 'left';
+    }
+
+    // ===== Export =====
+    function exportPNG() {
+      if (currentTab === 'animation' && isPlaying) { stopAnim(); }
+      const link = document.createElement('a');
+      link.download = `安全守护者_${currentTab}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('图片已导出', 'success');
+    }
+
+    function toggleRecord() {
+      if (isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.getElementById('recordBtn').textContent = '🔴 录制视频';
+        document.getElementById('recordBtn').className = 'btn btn-sm btn-outline';
+        return;
+      }
+      try {
+        const stream = canvas.captureStream(30);
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `安全守护者_动画_${Date.now()}.webm`; a.click();
+          URL.revokeObjectURL(url);
+          showToast('视频已导出', 'success');
+        };
+        mediaRecorder.start();
+        isRecording = true;
+        document.getElementById('recordBtn').textContent = '⏹ 停止录制';
+        document.getElementById('recordBtn').className = 'btn btn-sm btn-danger';
+        if (!isPlaying) togglePlay();
+        showToast('录制中...点击停止按钮结束', 'info');
+      } catch (e) {
+        showToast('录制功能不支持当前浏览器', 'error');
+      }
+    }
+
+    // Polyfill for roundRect
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+        if(!Array.isArray(r))r=[r,r,r,r];
+        this.moveTo(x+r[0],y);this.lineTo(x+w-r[1],y);this.quadraticCurveTo(x+w,y,x+w,y+r[1]);
+        this.lineTo(x+w,y+h-r[2]);this.quadraticCurveTo(x+w,y+h,x+w-r[2],y+h);
+        this.lineTo(x+r[3],y+h);this.quadraticCurveTo(x,y+h,x,y+h-r[3]);
+        this.lineTo(x,y+r[0]);this.quadraticCurveTo(x,y,x+r[0],y);this.closePath();
+      };
+    }
+
+    // Initial draw
+    drawFrame();
+  </script>
+</body>
+</html>
