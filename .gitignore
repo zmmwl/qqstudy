@@ -45,5 +45,8 @@ Thumbs.db
 # 可执行文件
 *.exe
 
+# C/C++ 构建目录
+clang/build/
+
 # 生成的数据
 web_crawler/data/
